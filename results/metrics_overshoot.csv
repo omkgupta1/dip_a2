@@ -1,0 +1,73 @@
+image,factor,method,pct_out_of_range,min,max
+mandrill,2,Nearest (0th),0.0,12.0,214.0
+mandrill,2,Linear (1st),0.0,13.81,211.56
+mandrill,2,Quadratic (2nd),0.0,10.98,213.0
+mandrill,2,Cubic (3rd),0.0,10.31,213.26
+mandrill,2,Lanczos-3,0.0,0.54,223.04
+mandrill,2,Lanczos-4,0.0004,-2.86,224.72
+mandrill,4,Nearest (0th),0.0,18.0,209.0
+mandrill,4,Linear (1st),0.0,19.11,207.78
+mandrill,4,Quadratic (2nd),0.0,13.1,209.06
+mandrill,4,Cubic (3rd),0.0,8.69,209.18
+mandrill,4,Lanczos-3,0.0,2.91,209.7
+mandrill,4,Lanczos-4,0.0,1.75,210.27
+mandrill,8,Nearest (0th),0.0,25.0,203.0
+mandrill,8,Linear (1st),0.0,27.28,201.88
+mandrill,8,Quadratic (2nd),0.0,23.05,203.2
+mandrill,8,Cubic (3rd),0.0,22.06,203.19
+mandrill,8,Lanczos-3,0.0,19.36,205.89
+mandrill,8,Lanczos-4,0.0,19.41,205.06
+airplane,2,Nearest (0th),0.0,18.0,230.0
+airplane,2,Linear (1st),0.0,19.5,228.12
+airplane,2,Quadratic (2nd),0.0,15.02,231.75
+airplane,2,Cubic (3rd),0.0,13.21,232.59
+airplane,2,Lanczos-3,0.0,7.32,234.06
+airplane,2,Lanczos-4,0.0,8.43,233.55
+airplane,4,Nearest (0th),0.0,22.0,227.0
+airplane,4,Linear (1st),0.0,22.28,225.47
+airplane,4,Quadratic (2nd),0.0,17.31,229.99
+airplane,4,Cubic (3rd),0.0,12.53,232.12
+airplane,4,Lanczos-3,0.0,7.28,241.09
+airplane,4,Lanczos-4,0.0,7.92,243.51
+airplane,8,Nearest (0th),0.0,24.0,224.0
+airplane,8,Linear (1st),0.0,24.36,223.33
+airplane,8,Quadratic (2nd),0.0,13.97,230.14
+airplane,8,Cubic (3rd),0.0,7.89,232.06
+airplane,8,Lanczos-3,0.0011,-0.38,236.28
+airplane,8,Lanczos-4,0.0015,-0.51,237.76
+peppers,2,Nearest (0th),0.0,3.0,225.0
+peppers,2,Linear (1st),0.0,4.56,224.25
+peppers,2,Quadratic (2nd),0.0008,-1.91,225.02
+peppers,2,Cubic (3rd),0.0019,-3.3,225.45
+peppers,2,Lanczos-3,0.0111,-8.25,230.79
+peppers,2,Lanczos-4,0.013,-9.82,231.46
+peppers,4,Nearest (0th),0.0,6.0,224.0
+peppers,4,Linear (1st),0.0,6.36,221.16
+peppers,4,Quadratic (2nd),0.0,0.07,224.6
+peppers,4,Cubic (3rd),0.0061,-4.8,225.5
+peppers,4,Lanczos-3,0.0473,-11.97,229.34
+peppers,4,Lanczos-4,0.0519,-12.25,230.69
+peppers,8,Nearest (0th),0.0,8.0,218.0
+peppers,8,Linear (1st),0.0,8.2,216.5
+peppers,8,Quadratic (2nd),0.0,0.38,220.96
+peppers,8,Cubic (3rd),0.0175,-2.74,222.98
+peppers,8,Lanczos-3,0.1259,-12.78,227.55
+peppers,8,Lanczos-4,0.1335,-13.15,228.07
+stream,2,Nearest (0th),0.0,0.0,255.0
+stream,2,Linear (1st),0.0,0.0,254.94
+stream,2,Quadratic (2nd),0.1575,-7.27,263.66
+stream,2,Cubic (3rd),0.267,-8.21,265.18
+stream,2,Lanczos-3,0.2647,-12.47,271.69
+stream,2,Lanczos-4,0.33,-14.06,272.26
+stream,4,Nearest (0th),0.0,0.0,254.0
+stream,4,Linear (1st),0.0,0.0,253.23
+stream,4,Quadratic (2nd),0.1823,-4.23,257.83
+stream,4,Cubic (3rd),0.2296,-6.58,264.56
+stream,4,Lanczos-3,0.2697,-10.9,277.39
+stream,4,Lanczos-4,0.2659,-11.95,278.24
+stream,8,Nearest (0th),0.0,1.0,251.0
+stream,8,Linear (1st),0.0,1.0,248.3
+stream,8,Quadratic (2nd),0.0267,-3.65,254.98
+stream,8,Cubic (3rd),0.0443,-4.86,257.49
+stream,8,Lanczos-3,0.087,-8.59,261.39
+stream,8,Lanczos-4,0.0984,-9.38,258.94

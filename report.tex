@@ -3,37 +3,45 @@
 \usepackage[margin=2.2cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{amsmath}
+\usepackage{amsmath,amssymb}
 \usepackage{float}
 \usepackage{caption}
-\usepackage{subcaption}
 \usepackage{multirow}
 \usepackage[table]{xcolor}
 \usepackage[hidelinks]{hyperref}
 \usepackage{enumitem}
 
-% Images live in results/ relative to this .tex file
 \graphicspath{{results/}{./}}
-
 \captionsetup{font=small,labelfont=bf}
 \setlist{itemsep=2pt,topsep=4pt}
 
-\title{\vspace{-1.5cm}\textbf{Assignment 2 --- Interpolation-Based Super-Resolution}}
-\author{Om Kumar Gupta \\ B.Tech, Electronics and Communication Engineering \\ IIIT Delhi}
-\date{\today}
+\title{\vspace{-1.5cm}\textbf{Assignment 2 --- Interpolation-Based Super-Resolution}\\
+\large Digital Image Processing}
+\author{Om Kumar Gupta \\ Roll No.\ 2023362 \\ IIIT Delhi}
 
 \begin{document}
 \maketitle
+\thispagestyle{empty}
+
+\vspace{-1cm}
+\tableofcontents
+\clearpage
 
 %==========================================================
-\section{Objective}
+\section{Objective and scope}
 
-The aim of this study is to evaluate classical interpolation-based super-resolution.
-Four $512 \times 512$ grayscale images are downsampled to $64\times64$, $128\times128$ and
+Four $512\times512$ grayscale images are downsampled to $64\times64$, $128\times128$ and
 $256\times256$, then super-resolved back to $512\times512$ using interpolation kernels of
-increasing order. Reconstruction quality is measured against the original image using PSNR
-and SSIM, and the computational cost of each method is measured. The enlargement factors
-under study are listed in Table~\ref{tab:settings}.
+increasing order. Reconstruction quality is measured against the original using PSNR and
+SSIM, and the computational cost of each method is measured.
+
+Every algorithm in this study is implemented from first principles using NumPy array
+arithmetic only. No library resize, no library metric and no library convolution routine is
+used anywhere in the pipeline. Grayscale conversion, block-average downsampling, the
+separable interpolation engine, all six interpolation kernels, PSNR, SSIM (including its
+Gaussian windowing) and the Sobel operator used in Section~\ref{sec:regions} are all written
+out below and implemented directly. External libraries are used only to read the TIFF files
+from disk and to draw the figures.
 
 \begin{table}[H]
 \centering
@@ -54,14 +62,13 @@ $256\times256$ & $512\times512$ & $2\times$ \\
 \section{Dataset}
 
 Four images were taken from the Miscellaneous volume of the USC-SIPI image database
-(\url{https://sipi.usc.edu/database/database.php?volume=misc}). They were selected to span
-distinct content types --- dense texture, hard geometric edges, large smooth regions, and a
-mixture --- so that the dependence of the results on image content could be examined.
+(\url{https://sipi.usc.edu/database/database.php?volume=misc}), selected to span distinct
+content types so that the dependence of the results on image content could be examined.
 
 \begin{table}[H]
 \centering
-\caption{Selected images. All were converted to 8-bit grayscale at $512\times512$ before
-any processing.}
+\caption{Selected images. All converted to 8-bit grayscale at $512\times512$ before
+processing.}
 \label{tab:dataset}
 \begin{tabular}{llll}
 \toprule
@@ -78,86 +85,273 @@ SIPI id & Name & Native format & Content character \\
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures_fig1_originals.png}
-\caption{The four original grayscale reference images ($512\times512$, 8\,bpp). These serve
-as the ground truth for all PSNR and SSIM computations.}
+\caption{The four original grayscale reference images ($512\times512$, 8\,bpp). These are the
+ground truth for all PSNR and SSIM computations.}
 \label{fig:originals}
 \end{figure}
 
 %==========================================================
-\section{Methodology}
+\section{Method: formulation and implementation}
 
-\subsection{Pipeline}
+\subsection{Grayscale conversion}
 
-The processing order is fixed for all images:
+Colour images are converted using the ITU-R BT.601 luma weights,
+\begin{equation}
+Y(m,n) = 0.299\,R(m,n) + 0.587\,G(m,n) + 0.114\,B(m,n),
+\label{eq:luma}
+\end{equation}
+evaluated in \texttt{float64} and then rounded and clipped to the 8-bit range,
+\begin{equation}
+I(m,n) = \min\!\big(255,\ \max(0,\ \mathrm{round}(Y(m,n)))\big).
+\label{eq:clip}
+\end{equation}
+Images stored natively as 8\,bpp monochrome bypass \eqref{eq:luma}. Conversion is performed
+before downsampling so that all four images follow an identical path.
 
-\begin{enumerate}[label=\arabic*.]
-  \item \textbf{Grayscale conversion.} Colour images are converted using ITU-R BT.601 luma
-        weights. Images already stored as 8\,bpp monochrome are passed through unchanged.
-        Conversion is performed \emph{before} downsampling so that all four images follow an
-        identical path.
-  \item \textbf{Downsampling.} The $512\times512$ grayscale reference is reduced to
-        $256\times256$, $128\times128$ and $64\times64$ using area averaging
-        (\texttt{cv2.INTER\_AREA}), i.e.\ a low-pass filter followed by decimation. The same
-        function and the same flag are used for every image and every size throughout the
-        study.
-  \item \textbf{Super-resolution.} Each low-resolution image is interpolated back to
-        $512\times512$.
-  \item \textbf{Evaluation.} PSNR and SSIM are computed between each super-resolved output
-        and the original $512\times512$ grayscale image, never against the low-resolution
-        input.
-\end{enumerate}
+\subsection{Downsampling by exact block averaging}
 
-Area averaging was chosen over plain decimation deliberately. Plain decimation would alias
-high-frequency content --- most severely on the mandrill --- before any interpolation took
-place, which would corrupt every subsequent metric and make the comparison between methods
-meaningless. Since $512/64$, $512/128$ and $512/256$ are exact powers of two, no fractional
-pixel alignment arises at either stage.
+For a decimation factor $f = 512/N$ with $N \in \{64,128,256\}$, each output sample is the
+mean of a disjoint $f \times f$ block of the reference:
+\begin{equation}
+I_{\text{LR}}(m,n) \;=\; \frac{1}{f^{2}} \sum_{p=0}^{f-1}\sum_{q=0}^{f-1}
+I_{\text{ref}}\big(mf + p,\; nf + q\big),
+\qquad 0 \le m,n < N.
+\label{eq:box}
+\end{equation}
+This is a box low-pass filter followed by decimation. It was chosen over plain subsampling
+because plain subsampling would alias high-frequency content --- most severely on the
+mandrill --- before any interpolation took place, corrupting every subsequent metric and
+making the comparison between methods meaningless. Because $512/64$, $512/128$ and $512/256$
+are exact integers, every block is fully covered and no partial-coverage weighting is needed.
+The result is rounded and clipped by \eqref{eq:clip}. The same procedure is used for every
+image and every size throughout the study.
 
-\subsection{Interpolation methods}
+\subsection{Coordinate mapping}
 
-Six methods were implemented, covering the orders named in the task plus a windowed-sinc
-kernel for comparison.
+Super-resolution maps an $N_{\text{in}}$-sample axis onto an $N_{\text{out}}$-sample axis.
+Using the half-pixel centre convention, output index $i$ corresponds to the continuous source
+coordinate
+\begin{equation}
+x(i) \;=\; \left(i + \tfrac{1}{2}\right)\frac{N_{\text{in}}}{N_{\text{out}}} - \tfrac{1}{2}.
+\label{eq:coord}
+\end{equation}
+The $\pm\tfrac{1}{2}$ terms place sample centres rather than sample edges in correspondence,
+which keeps the reconstruction geometrically centred. Omitting them produces a half-pixel
+shift that biases every metric downward; verifying \eqref{eq:coord} was the single most
+important correctness check in the implementation (Section~\ref{sec:validation}).
 
-\begin{table}[H]
-\centering
-\caption{Interpolation methods evaluated.}
-\label{tab:methods}
-\begin{tabular}{llll}
-\toprule
-Order & Method & Implementation & Kernel character \\
-\midrule
-0th & Nearest neighbour & scikit-image, \texttt{order=0} & Piecewise constant \\
-1st & Bilinear          & scikit-image, \texttt{order=1} & Piecewise linear \\
-2nd & Biquadratic       & scikit-image, \texttt{order=2} & Quadratic B-spline \\
-3rd & Bicubic           & scikit-image, \texttt{order=3} & Cubic B-spline \\
-5th & Biquintic         & scikit-image, \texttt{order=5} & Quintic B-spline \\
---- & Lanczos-4         & OpenCV, \texttt{INTER\_LANCZOS4} & Windowed sinc \\
-\bottomrule
-\end{tabular}
-\end{table}
+\subsection{Separable interpolation}
 
-Orders 0--5 are all drawn from a single library so that the runtime column compares like with
-like. OpenCV provides no second-, fourth- or fifth-order resize, so the spline family could
-not be sourced from it; conversely scikit-image provides no Lanczos resize. The Lanczos-4
-timing must therefore be read as a separate note rather than as a directly comparable
-measurement --- this is discussed in Section~\ref{sec:runtime}.
+For a symmetric kernel $k(\cdot)$ of radius $r$, the reconstructed intensity at a continuous
+location $(x,y)$ is
+\begin{equation}
+\hat{I}(x,y) \;=\; \sum_{j}\sum_{i} k(x-i)\,k(y-j)\, I_{\text{LR}}(j,i).
+\label{eq:interp2d}
+\end{equation}
+Because the 2-D kernel in \eqref{eq:interp2d} factorises as a product of two 1-D kernels, the
+sum separates into two successive 1-D passes --- first along rows, then along columns:
+\begin{equation}
+\hat{I}(x,y) \;=\; \sum_{j} k(y-j) \left[ \sum_{i} k(x-i)\, I_{\text{LR}}(j,i) \right].
+\label{eq:separable}
+\end{equation}
+With $T = \lceil 2r \rceil + 1$ taps per axis, the direct form \eqref{eq:interp2d} costs
+$\mathcal{O}(T^{2})$ multiply--accumulates per output pixel while the separable form
+\eqref{eq:separable} costs $\mathcal{O}(2T)$. For Lanczos-4, $T = 9$, so separability reduces
+the work per pixel from 81 to 18 operations --- a factor of $4.5$. This prediction is tested
+against measured runtime in Section~\ref{sec:cost-scaling}.
 
-Anti-aliasing is disabled for all upsampling operations, as it is a downsampling-only
-concern. Kernels of order $\ge 2$ have negative lobes and can produce values outside
-$[0,255]$ near strong edges; all outputs are clipped to $[0,255]$ and cast to \texttt{uint8}
-before metrics are computed. Orders 0 and 1 have non-negative kernels and cannot overshoot by
-construction.
+The implementation precomputes, for each axis, the tap index matrix and the weight matrix
+\begin{equation}
+\Lambda_{i,t} = \big\lceil x(i) - r \big\rceil + t,
+\qquad
+W_{i,t} = k\big(x(i) - \Lambda_{i,t}\big),
+\qquad t = 0,\dots,T-1,
+\end{equation}
+and applies them to the image as two tensor contractions.
+
+\subsection{Boundary handling and weight normalisation}
+
+Tap indices falling outside the valid range are clamped to the edge,
+\begin{equation}
+\Lambda_{i,t} \leftarrow \min\big(N_{\text{in}}-1,\ \max(0,\ \Lambda_{i,t})\big),
+\end{equation}
+which replicates the border sample rather than introducing a synthetic dark margin. Clamping
+causes several taps to reference the same sample near a border, so the weights are
+renormalised to preserve the partition-of-unity property,
+\begin{equation}
+\widetilde{W}_{i,t} \;=\; \frac{W_{i,t}}{\sum_{t'} W_{i,t'}},
+\qquad\text{so that}\qquad \sum_{t} \widetilde{W}_{i,t} = 1 \;\;\forall i.
+\label{eq:normalise}
+\end{equation}
+Equation~\eqref{eq:normalise} guarantees that a constant image is reproduced exactly by every
+kernel, which is verified in Section~\ref{sec:validation}. The final output is rounded and
+clipped by \eqref{eq:clip}.
+
+\subsection{Interpolation kernels}
+
+All six kernels are interpolating --- $k(0)=1$ and $k(n)=0$ for every nonzero integer $n$ ---
+so retained samples are reproduced exactly.
+
+\paragraph{Zeroth order (nearest neighbour).}
+\begin{equation}
+k_{0}(x) = \begin{cases} 1, & -\tfrac{1}{2} < x \le \tfrac{1}{2} \\[2pt] 0, &
+\text{otherwise} \end{cases}
+\qquad r = 0.5,\quad T = 2.
+\label{eq:k0}
+\end{equation}
+The half-open interval avoids an ambiguous tie at exactly $\pm\tfrac12$.
+
+\paragraph{First order (linear).}
+\begin{equation}
+k_{1}(x) = \begin{cases} 1 - |x|, & |x| < 1 \\[2pt] 0, & \text{otherwise} \end{cases}
+\qquad r = 1,\quad T = 3.
+\label{eq:k1}
+\end{equation}
+
+\paragraph{Second order (Dodgson quadratic, $r=1$).}
+\begin{equation}
+k_{2}(x) = \begin{cases}
+-2|x|^{2} + 1, & |x| \le \tfrac{1}{2} \\[3pt]
+|x|^{2} - \tfrac{5}{2}|x| + \tfrac{3}{2}, & \tfrac{1}{2} < |x| \le \tfrac{3}{2} \\[3pt]
+0, & \text{otherwise}
+\end{cases}
+\qquad r = 1.5,\quad T = 4.
+\label{eq:k2}
+\end{equation}
+
+\paragraph{Third order (Keys cubic convolution, $a = -\tfrac{1}{2}$).}
+\begin{equation}
+k_{3}(x) = \begin{cases}
+(a+2)|x|^{3} - (a+3)|x|^{2} + 1, & |x| \le 1 \\[3pt]
+a|x|^{3} - 5a|x|^{2} + 8a|x| - 4a, & 1 < |x| < 2 \\[3pt]
+0, & \text{otherwise}
+\end{cases}
+\qquad r = 2,\quad T = 5.
+\label{eq:k3}
+\end{equation}
+The choice $a = -\tfrac{1}{2}$ makes the reconstruction agree with the Taylor expansion of the
+underlying signal to third order, which is the standard Keys parameter.
+
+\paragraph{Windowed sinc (Lanczos-$A$, $A \in \{3,4\}$).}
+\begin{equation}
+k_{A}(x) = \begin{cases}
+\operatorname{sinc}(x)\,\operatorname{sinc}\!\left(\dfrac{x}{A}\right), & |x| < A \\[8pt]
+0, & \text{otherwise}
+\end{cases}
+\qquad
+\operatorname{sinc}(x) = \begin{cases} \dfrac{\sin \pi x}{\pi x}, & x \neq 0 \\[6pt]
+1, & x = 0 \end{cases}
+\label{eq:klanczos}
+\end{equation}
+giving $r = A$ and $T = 2A+1$, i.e.\ $T = 7$ for Lanczos-3 and $T = 9$ for Lanczos-4. The
+kernel is the ideal sinc reconstruction filter truncated by a wider sinc lobe acting as a
+window.
+
+Kernels \eqref{eq:k2}, \eqref{eq:k3} and \eqref{eq:klanczos} take negative values away from
+the origin. These negative lobes sharpen edges but allow the reconstruction to exceed the
+range of the surrounding samples, which is the mechanism behind the ringing and overshoot
+discussed in Section~\ref{sec:artefacts}. Kernels \eqref{eq:k0} and \eqref{eq:k1} are
+non-negative and, by \eqref{eq:normalise}, produce outputs bounded by the convex hull of their
+input taps --- they cannot overshoot.
+
+\subsection{PSNR}
+
+For an $M \times N$ reference $I$ and reconstruction $\hat{I}$,
+\begin{equation}
+\mathrm{MSE} = \frac{1}{MN}\sum_{m=0}^{M-1}\sum_{n=0}^{N-1}
+\big(I(m,n) - \hat{I}(m,n)\big)^{2},
+\qquad
+\mathrm{PSNR} = 10 \log_{10}\!\left(\frac{L^{2}}{\mathrm{MSE}}\right),
+\label{eq:psnr}
+\end{equation}
+with $L = 255$. Both images are cast to \texttt{float64} before the difference is taken, so
+the subtraction does not wrap around in unsigned arithmetic.
+
+\subsection{SSIM}
+
+SSIM is computed in the form of Wang et al.\ (2004), with Gaussian-weighted local statistics
+over an $11\times11$ window ($\sigma = 1.5$). The 2-D Gaussian window is separable and is
+applied as two 1-D passes, exactly as in \eqref{eq:separable}:
+\begin{equation}
+g(t) = \frac{\exp\!\big(-t^{2}/2\sigma^{2}\big)}{\sum_{t'} \exp\!\big(-t'^{2}/2\sigma^{2}\big)},
+\qquad t = -5,\dots,5 .
+\label{eq:gauss}
+\end{equation}
+Writing $\mu_{x} = g * x$ for the windowed mean, the local second moments follow from
+\begin{equation}
+\sigma_{x}^{2} = g * x^{2} - \mu_{x}^{2},
+\qquad
+\sigma_{y}^{2} = g * y^{2} - \mu_{y}^{2},
+\qquad
+\sigma_{xy} = g * (xy) - \mu_{x}\mu_{y},
+\label{eq:moments}
+\end{equation}
+which avoids a second explicit pass over the window. The local SSIM map is
+\begin{equation}
+\mathrm{SSIM}(m,n) =
+\frac{\big(2\mu_{x}\mu_{y} + C_{1}\big)\big(2\sigma_{xy} + C_{2}\big)}
+     {\big(\mu_{x}^{2} + \mu_{y}^{2} + C_{1}\big)\big(\sigma_{x}^{2} + \sigma_{y}^{2} + C_{2}\big)},
+\qquad
+\begin{aligned}
+C_{1} &= (K_{1}L)^{2}, \; K_{1} = 0.01,\\
+C_{2} &= (K_{2}L)^{2}, \; K_{2} = 0.03,
+\end{aligned}
+\label{eq:ssim}
+\end{equation}
+and the reported figure is the mean of this map. The first factor of the numerator is the
+luminance term; the second combines contrast and structure. The contrast term responds
+directly to local variance, which is the mechanism behind the result in
+Section~\ref{sec:anomaly}, where a method that preserves local contrast outscores a smoother
+one on SSIM by a much larger margin than on PSNR.
 
 \subsection{Measurement protocol}
 
-PSNR and SSIM are computed on the full $512\times512$ frame with \texttt{data\_range=255},
-using \texttt{skimage.metrics}. Runtime covers the interpolation call only --- no file I/O,
-no metric computation, no plotting. Each configuration is executed once as a warm-up and then
-timed over 10 further runs using \texttt{time.perf\_counter()}; the reported value is the
-mean in milliseconds.
+Runtime covers the interpolation call only --- no file I/O, no metric computation, no
+plotting. Each configuration is executed three times as warm-up and then timed over 15 further
+runs with \texttt{time.perf\_counter()}; the reported statistic is the median, which is robust
+to the occasional scheduling outlier. The full experiment is
+$4 \text{ images} \times 3 \text{ factors} \times 6 \text{ methods} = 72$ reconstructions.
 
-The full experiment is $4 \text{ images} \times 3 \text{ factors} \times 6 \text{ methods}
-= 72$ super-resolved images and 72 measurement rows.
+%==========================================================
+\section{Implementation validation}
+\label{sec:validation}
+
+Because every algorithm is written from scratch, three independent checks were run before any
+result was recorded.
+
+\paragraph{1. The worked example from the assignment prelude.} Applying the nearest-neighbour
+kernel \eqref{eq:k0} to the $2\times2$ array given in the handout reproduces the $4\times4$
+result exactly:
+\[
+\begin{bmatrix} 40 & 120 \\ 180 & 220 \end{bmatrix}
+\;\longrightarrow\;
+\begin{bmatrix}
+40 & 40 & 120 & 120 \\
+40 & 40 & 120 & 120 \\
+180 & 180 & 220 & 220 \\
+180 & 180 & 220 & 220
+\end{bmatrix}
+\]
+
+\paragraph{2. Constant reproduction.} A uniform image of value 137 upsampled $8\times$ returns
+exactly 137 at every pixel for all six kernels, confirming the partition-of-unity property
+\eqref{eq:normalise} including at the borders.
+
+\paragraph{3. Agreement with reference implementations.} As an external check only --- no
+library routine is used in the pipeline --- the from-scratch results were compared against
+OpenCV for the three kernels the two implementations have in common. Nearest neighbour, linear
+and Lanczos-4 agree with OpenCV to the full two decimal places reported, in all twelve
+image--factor cells. For example, nearest neighbour on mandrill gives
+$23.35 / 20.85 / 19.70$\,dB and Lanczos-4 on airplane gives $31.90 / 26.48 / 22.75$\,dB under
+both implementations. Exact agreement across twelve independent cells confirms that the
+coordinate mapping \eqref{eq:coord}, the boundary handling and the kernel evaluations are all
+correct; a half-pixel error in \eqref{eq:coord} alone would have shifted every value by
+several tenths of a dB.
+
+The quadratic and cubic results differ from the corresponding library routines, as expected:
+\texttt{scikit-image} implements \emph{interpolating B-splines}, which require a recursive
+prefilter, whereas \eqref{eq:k2} and \eqref{eq:k3} are direct convolution kernels. These are
+different algorithms and are not expected to agree.
 
 %==========================================================
 \section{Results}
@@ -168,8 +362,7 @@ The full experiment is $4 \text{ images} \times 3 \text{ factors} \times 6 \text
 \centering
 \includegraphics[width=\textwidth]{figures_fig2_downsampled.png}
 \caption{Original and downsampled versions of each image, displayed at true relative scale.
-The loss of fur texture in the $64\times64$ mandrill is total; no interpolation method can
-recover it.}
+The loss of fur texture in the $64\times64$ mandrill is total.}
 \label{fig:downsampled}
 \end{figure}
 
@@ -179,9 +372,7 @@ recover it.}
 \centering
 \includegraphics[height=0.86\textheight]{figures_fig3_sr_airplane.png}
 \caption{Super-resolved results for \emph{airplane}: rows are interpolation methods, columns
-are enlargement factors. At $2\times$ all methods except nearest neighbour are nearly
-indistinguishable at this scale; at $8\times$ the gap between nearest neighbour and the rest
-is large, while the differences \emph{among} the higher-order methods remain small.}
+are enlargement factors.}
 \label{fig:sr-airplane}
 \end{figure}
 
@@ -208,9 +399,9 @@ is large, while the differences \emph{among} the higher-order methods remain sma
 
 \subsection{Magnified crops}
 
-Full-frame views cannot resolve two-pixel artefacts. The following crops are $64\times64$
-regions magnified for display with nearest-neighbour screen rendering, so that what is shown
-is the output of the pipeline and not a re-interpolation by the plotting library.
+Full-frame views cannot resolve two-pixel artefacts. The following are $64\times64$ regions
+magnified for display with nearest-neighbour screen rendering, so that what is shown is the
+output of the pipeline and not a re-interpolation introduced by the plotting library.
 
 \begin{figure}[H]
 \centering
@@ -218,18 +409,16 @@ is the output of the pipeline and not a re-interpolation by the plotting library
 \caption{\emph{Mandrill}, $8\times$, magnified crop. The original contains individual fur
 strands and a sharp eye boundary. Nearest neighbour reproduces the input as $8\times8$
 constant tiles; every higher-order method produces a smooth blob. No method recovers a single
-strand --- the frequencies were destroyed during downsampling, and interpolation estimates
-intensities between known samples rather than restoring lost information.}
+strand.}
 \label{fig:crop-mandrill}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures_fig4_crop_airplane_8x.png}
-\caption{\emph{Airplane}, $8\times$, magnified crop of the tail lettering against sky. This
-is the configuration in which ringing is visible: a bright/dark halo hugging the high-contrast
-edge in the higher-order reconstructions, absent from nearest neighbour and bilinear.}
-\label{fig:crop-airplane8}
+\caption{\emph{Airplane}, $8\times$, magnified crop of the tail lettering against sky --- the
+configuration in which ringing from the negative kernel lobes is visible.}
+\label{fig:crop-airplane}
 \end{figure}
 
 \begin{figure}[H]
@@ -252,44 +441,44 @@ background --- staircase artefacts in nearest neighbour, halos in the higher ord
 
 \begin{table}[H]
 \centering
-\caption{PSNR (dB) of each super-resolved image with respect to the original $512\times512$
-grayscale image. Higher is better; best per column in bold.}
+\caption{PSNR (dB) with respect to the original $512\times512$ grayscale image. Higher is
+better; best per column in bold.}
 \label{tab:psnr}
 \begin{tabular}{llccc}
 \toprule
 Image & Method & $2\times$ & $4\times$ & $8\times$ \\
 \midrule
 \multirow{6}{*}{Mandrill}
- & Nearest (0th)     & 23.35 & 20.85 & 19.70 \\
- & Bilinear (1st)    & 23.17 & 20.89 & 19.80 \\
- & Biquadratic (2nd) & \textbf{23.87} & \textbf{21.11} & \textbf{19.94} \\
- & Bicubic (3rd)     & 23.81 & 21.08 & \textbf{19.94} \\
- & Biquintic (5th)   & 23.79 & 21.07 & \textbf{19.94} \\
- & Lanczos-4         & 23.80 & 21.07 & \textbf{19.94} \\
+ & Nearest (0th)   & 23.35 & 20.85 & 19.70 \\
+ & Linear (1st)    & 23.17 & 20.89 & 19.80 \\
+ & Quadratic (2nd) & 23.74 & 21.06 & 19.89 \\
+ & Cubic (3rd)     & 23.75 & 21.08 & 19.92 \\
+ & Lanczos-3       & \textbf{23.83} & \textbf{21.09} & \textbf{19.94} \\
+ & Lanczos-4       & 23.80 & 21.07 & \textbf{19.94} \\
 \midrule
 \multirow{6}{*}{Airplane}
- & Nearest (0th)     & 28.87 & 24.70 & 21.73 \\
- & Bilinear (1st)    & 30.11 & 25.49 & 22.22 \\
- & Biquadratic (2nd) & 31.68 & 26.38 & 22.73 \\
- & Bicubic (3rd)     & 31.77 & 26.42 & 22.73 \\
- & Biquintic (5th)   & \textbf{31.91} & \textbf{26.49} & \textbf{22.76} \\
- & Lanczos-4         & 31.90 & 26.48 & 22.75 \\
+ & Nearest (0th)   & 28.87 & 24.70 & 21.73 \\
+ & Linear (1st)    & 30.11 & 25.49 & 22.22 \\
+ & Quadratic (2nd) & 31.09 & 25.99 & 22.52 \\
+ & Cubic (3rd)     & 31.34 & 26.20 & 22.63 \\
+ & Lanczos-3       & 31.85 & 26.46 & \textbf{22.75} \\
+ & Lanczos-4       & \textbf{31.90} & \textbf{26.48} & \textbf{22.75} \\
 \midrule
 \multirow{6}{*}{Peppers}
- & Nearest (0th)     & 29.86 & 26.01 & 22.85 \\
- & Bilinear (1st)    & 30.98 & 27.21 & 23.88 \\
- & Biquadratic (2nd) & 31.96 & 28.05 & 24.71 \\
- & Bicubic (3rd)     & 31.99 & 28.09 & 24.75 \\
- & Biquintic (5th)   & \textbf{32.04} & \textbf{28.15} & \textbf{24.81} \\
- & Lanczos-4         & \textbf{32.04} & 28.14 & \textbf{24.81} \\
+ & Nearest (0th)   & 29.86 & 26.01 & 22.85 \\
+ & Linear (1st)    & 30.98 & 27.21 & 23.88 \\
+ & Quadratic (2nd) & 31.64 & 27.66 & 24.32 \\
+ & Cubic (3rd)     & 31.78 & 27.89 & 24.55 \\
+ & Lanczos-3       & 32.03 & 28.12 & 24.79 \\
+ & Lanczos-4       & \textbf{32.04} & \textbf{28.14} & \textbf{24.81} \\
 \midrule
 \multirow{6}{*}{Stream}
- & Nearest (0th)     & 25.68 & 22.27 & 20.28 \\
- & Bilinear (1st)    & 25.85 & 22.67 & 20.58 \\
- & Biquadratic (2nd) & \textbf{26.84} & 23.14 & \textbf{20.92} \\
- & Bicubic (3rd)     & 26.80 & 23.14 & 20.91 \\
- & Biquintic (5th)   & 26.83 & \textbf{23.16} & 20.91 \\
- & Lanczos-4         & 26.83 & \textbf{23.16} & 20.91 \\
+ & Nearest (0th)   & 25.68 & 22.27 & 20.28 \\
+ & Linear (1st)    & 25.85 & 22.67 & 20.58 \\
+ & Quadratic (2nd) & 26.58 & 22.97 & 20.80 \\
+ & Cubic (3rd)     & 26.65 & 23.06 & 20.86 \\
+ & Lanczos-3       & \textbf{26.85} & \textbf{23.16} & \textbf{20.92} \\
+ & Lanczos-4       & 26.83 & \textbf{23.16} & 20.91 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -298,44 +487,44 @@ Image & Method & $2\times$ & $4\times$ & $8\times$ \\
 
 \begin{table}[H]
 \centering
-\caption{SSIM of each super-resolved image with respect to the original $512\times512$
-grayscale image. Higher is better; best per column in bold.}
+\caption{SSIM with respect to the original $512\times512$ grayscale image. Higher is better;
+best per column in bold.}
 \label{tab:ssim}
 \begin{tabular}{llccc}
 \toprule
 Image & Method & $2\times$ & $4\times$ & $8\times$ \\
 \midrule
 \multirow{6}{*}{Mandrill}
- & Nearest (0th)     & 0.7546 & 0.4839 & 0.2974 \\
- & Bilinear (1st)    & 0.7006 & 0.4512 & 0.2978 \\
- & Biquadratic (2nd) & \textbf{0.7676} & 0.4940 & \textbf{0.3154} \\
- & Bicubic (3rd)     & 0.7640 & 0.4921 & 0.3143 \\
- & Biquintic (5th)   & 0.7667 & 0.4943 & 0.3150 \\
- & Lanczos-4         & 0.7669 & \textbf{0.4945} & 0.3150 \\
+ & Nearest (0th)   & 0.7306 & 0.4510 & 0.2942 \\
+ & Linear (1st)    & 0.6729 & 0.4254 & 0.2990 \\
+ & Quadratic (2nd) & 0.7296 & 0.4528 & 0.3086 \\
+ & Cubic (3rd)     & 0.7307 & 0.4555 & 0.3101 \\
+ & Lanczos-3       & \textbf{0.7428} & \textbf{0.4617} & \textbf{0.3125} \\
+ & Lanczos-4       & 0.7419 & 0.4610 & 0.3120 \\
 \midrule
 \multirow{6}{*}{Airplane}
- & Nearest (0th)     & 0.9278 & 0.8042 & 0.6517 \\
- & Bilinear (1st)    & 0.9327 & 0.8191 & 0.6843 \\
- & Biquadratic (2nd) & 0.9525 & \textbf{0.8450} & \textbf{0.6990} \\
- & Bicubic (3rd)     & 0.9524 & 0.8443 & 0.6974 \\
- & Biquintic (5th)   & \textbf{0.9527} & 0.8438 & 0.6958 \\
- & Lanczos-4         & \textbf{0.9527} & 0.8438 & 0.6947 \\
+ & Nearest (0th)   & 0.9241 & 0.7935 & 0.6576 \\
+ & Linear (1st)    & 0.9312 & 0.8175 & 0.6971 \\
+ & Quadratic (2nd) & 0.9463 & 0.8332 & 0.7055 \\
+ & Cubic (3rd)     & 0.9484 & 0.8371 & \textbf{0.7078} \\
+ & Lanczos-3       & \textbf{0.9526} & \textbf{0.8403} & 0.7072 \\
+ & Lanczos-4       & 0.9524 & 0.8395 & 0.7061 \\
 \midrule
 \multirow{6}{*}{Peppers}
- & Nearest (0th)     & 0.8845 & 0.7736 & 0.6133 \\
- & Bilinear (1st)    & 0.8861 & 0.8032 & 0.6906 \\
- & Biquadratic (2nd) & \textbf{0.9010} & \textbf{0.8226} & \textbf{0.7105} \\
- & Bicubic (3rd)     & 0.8998 & 0.8220 & 0.7097 \\
- & Biquintic (5th)   & 0.8990 & 0.8211 & 0.7077 \\
- & Lanczos-4         & 0.8992 & 0.8208 & 0.7068 \\
+ & Nearest (0th)   & 0.8757 & 0.7551 & 0.6143 \\
+ & Linear (1st)    & 0.8793 & 0.7967 & 0.6981 \\
+ & Quadratic (2nd) & 0.8919 & 0.8079 & 0.7067 \\
+ & Cubic (3rd)     & 0.8926 & 0.8117 & 0.7121 \\
+ & Lanczos-3       & \textbf{0.8939} & \textbf{0.8133} & \textbf{0.7136} \\
+ & Lanczos-4       & 0.8928 & 0.8126 & 0.7126 \\
 \midrule
 \multirow{6}{*}{Stream}
- & Nearest (0th)     & 0.8069 & 0.5550 & 0.3329 \\
- & Bilinear (1st)    & 0.7804 & 0.5414 & 0.3457 \\
- & Biquadratic (2nd) & 0.8353 & 0.5887 & \textbf{0.3683} \\
- & Bicubic (3rd)     & 0.8338 & 0.5877 & 0.3663 \\
- & Biquintic (5th)   & 0.8363 & 0.5901 & 0.3664 \\
- & Lanczos-4         & \textbf{0.8364} & \textbf{0.5904} & 0.3664 \\
+ & Nearest (0th)   & 0.7838 & 0.5163 & 0.3281 \\
+ & Linear (1st)    & 0.7556 & 0.5132 & 0.3462 \\
+ & Quadratic (2nd) & 0.8009 & 0.5425 & 0.3599 \\
+ & Cubic (3rd)     & 0.8037 & 0.5474 & 0.3617 \\
+ & Lanczos-3       & \textbf{0.8154} & \textbf{0.5555} & \textbf{0.3635} \\
+ & Lanczos-4       & 0.8152 & 0.5554 & 0.3627 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -344,63 +533,61 @@ Image & Method & $2\times$ & $4\times$ & $8\times$ \\
 \centering
 \caption{PSNR and SSIM averaged over the four images. Best per column in bold.}
 \label{tab:mean}
-\begin{tabular}{lccc@{\hskip 1.2cm}ccc}
+\begin{tabular}{lccc@{\hskip 1.1cm}ccc}
 \toprule
 & \multicolumn{3}{c}{Mean PSNR (dB)} & \multicolumn{3}{c}{Mean SSIM} \\
 \cmidrule(lr){2-4}\cmidrule(lr){5-7}
 Method & $2\times$ & $4\times$ & $8\times$ & $2\times$ & $4\times$ & $8\times$ \\
 \midrule
-Nearest (0th)     & 26.94 & 23.46 & 21.14 & 0.8435 & 0.6542 & 0.4738 \\
-Bilinear (1st)    & 27.53 & 24.07 & 21.62 & 0.8250 & 0.6537 & 0.5046 \\
-Biquadratic (2nd) & 28.59 & 24.67 & 22.08 & \textbf{0.8641} & \textbf{0.6876} & \textbf{0.5233} \\
-Bicubic (3rd)     & 28.59 & 24.68 & 22.08 & 0.8625 & 0.6865 & 0.5219 \\
-Biquintic (5th)   & \textbf{28.64} & \textbf{24.72} & \textbf{22.11} & 0.8637 & 0.6873 & 0.5212 \\
-Lanczos-4         & \textbf{28.64} & 24.71 & 22.10 & 0.8638 & 0.6874 & 0.5207 \\
+Nearest (0th)   & 26.94 & 23.46 & 21.14 & 0.8286 & 0.6290 & 0.4736 \\
+Linear (1st)    & 27.53 & 24.06 & 21.62 & 0.8098 & 0.6382 & 0.5101 \\
+Quadratic (2nd) & 28.26 & 24.42 & 21.88 & 0.8422 & 0.6591 & 0.5202 \\
+Cubic (3rd)     & 28.38 & 24.56 & 21.99 & 0.8438 & 0.6629 & 0.5229 \\
+Lanczos-3       & \textbf{28.64} & \textbf{24.71} & \textbf{22.10} & \textbf{0.8512} &
+                  \textbf{0.6677} & \textbf{0.5242} \\
+Lanczos-4       & \textbf{28.64} & \textbf{24.71} & \textbf{22.10} & 0.8506 & 0.6671 & 0.5234 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Runtime}
-\label{sec:runtime}
 
 \begin{table}[H]
 \centering
 \caption{Runtime in milliseconds, averaged over the four images. Each per-image value is the
-mean of 10 timed runs after one warm-up call, and covers the interpolation call only.
-Orders 0--5 are scikit-image; Lanczos-4 is OpenCV.}
+median of 15 timed runs after three warm-up calls, and covers the interpolation call only.
+$T$ is the number of taps per axis.}
 \label{tab:runtime}
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \toprule
-Method & $2\times$ ($256\!\to\!512$) & $4\times$ ($128\!\to\!512$) & $8\times$ ($64\!\to\!512$) \\
+Method & $T$ & $2\times$ ($256\!\to\!512$) & $4\times$ ($128\!\to\!512$) & $8\times$ ($64\!\to\!512$) \\
 \midrule
-Nearest (0th)     &  1.108 &  1.028 &  1.023 \\
-Bilinear (1st)    &  2.665 &  2.430 &  2.474 \\
-Biquadratic (2nd) &  5.221 &  4.584 &  4.231 \\
-Bicubic (3rd)     &  7.621 &  6.755 &  6.724 \\
-Biquintic (5th)   & 16.002 & 14.646 & 14.360 \\
-\midrule
-Lanczos-4$^{\dagger}$ & 0.215 & 0.166 & 0.139 \\
+Nearest (0th)   & 2 & 1.011$^{\dagger}$ & 0.653 & 0.612 \\
+Linear (1st)    & 3 & 1.012 & 0.840 & 0.821 \\
+Quadratic (2nd) & 4 & 1.309 & 1.100 & 1.054 \\
+Cubic (3rd)     & 5 & 1.552 & 1.361 & 1.289 \\
+Lanczos-3       & 7 & 2.057 & 1.758 & 1.666 \\
+Lanczos-4       & 9 & 2.786 & 2.269 & 2.093 \\
 \bottomrule
-\multicolumn{4}{l}{\footnotesize $^{\dagger}$ Different library --- see discussion in
-Section~\ref{sec:disc-runtime}.}
+\multicolumn{5}{l}{\footnotesize $^{\dagger}$ Inflated by one first-touch outlier
+(mandrill, 1.778\,ms); the other three images give $0.74$--$0.77$\,ms.}
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Quality versus cost, averaged over all four images and all three enlargement
-factors.}
+\caption{Quality versus cost, averaged over all images and all enlargement factors.}
 \label{tab:summary}
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \toprule
-Method & Mean PSNR (dB) & Mean SSIM & Mean runtime (ms) \\
+Method & Mean PSNR (dB) & Mean SSIM & Mean runtime (ms) & Runtime per tap (ms) \\
 \midrule
-Nearest (0th)     & 23.85 & 0.6572 &  1.053 \\
-Bilinear (1st)    & 24.40 & 0.6611 &  2.523 \\
-Biquadratic (2nd) & 25.11 & \textbf{0.6917} &  4.679 \\
-Bicubic (3rd)     & 25.12 & 0.6903 &  7.033 \\
-Biquintic (5th)   & \textbf{25.16} & 0.6907 & 15.003 \\
-Lanczos-4         & 25.15 & 0.6906 &  0.173 \\
+Nearest (0th)   & 23.85 & 0.6437 & 0.759 & 0.379 \\
+Linear (1st)    & 24.40 & 0.6527 & 0.891 & 0.297 \\
+Quadratic (2nd) & 24.85 & 0.6738 & 1.154 & 0.289 \\
+Cubic (3rd)     & 24.98 & 0.6765 & 1.401 & 0.280 \\
+Lanczos-3       & \textbf{25.15} & \textbf{0.6810} & 1.827 & 0.261 \\
+Lanczos-4       & \textbf{25.15} & 0.6804 & 2.383 & 0.265 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -410,140 +597,365 @@ Lanczos-4         & 25.15 & 0.6906 &  0.173 \\
 
 \subsection{Quality across enlargement factors}
 
-Quality falls monotonically from $2\times$ to $4\times$ to $8\times$ for every method on
-every image, without a single exception across all 24 method--image combinations. Averaged
-over the four images, bicubic drops from 28.59\,dB at $2\times$ to 24.68\,dB at $4\times$ and
-22.08\,dB at $8\times$ --- roughly 3.9\,dB for the first step and a further 2.6\,dB for the
-second. SSIM degrades more steeply in relative terms, from 0.86 to 0.69 to 0.52.
+Quality falls monotonically from $2\times$ to $4\times$ to $8\times$ for every method on every
+image, with no exception across all 24 method--image combinations. Averaged over the four
+images, cubic drops from $28.38$\,dB at $2\times$ to $24.56$\,dB at $4\times$ and $21.99$\,dB
+at $8\times$ --- $3.82$\,dB for the first step and a further $2.57$\,dB for the second. SSIM
+degrades more steeply in relative terms, from $0.844$ to $0.663$ to $0.523$.
 
-The reason is straightforward. At $2\times$, one in four output pixels corresponds to a
-retained sample; at $8\times$ only one in sixty-four does, so $63/64$ of the output is
-estimated. More importantly, the area-averaging stage acts as a low-pass filter whose cutoff
-scales with the decimation factor, and the high-frequency content it removes is not present in
-any form in the low-resolution image. Interpolation reconstructs intensities \emph{between}
-known samples; it does not invert a low-pass filter. Figure~\ref{fig:crop-mandrill} makes this
-concrete: the fur strands visible in the original are absent from all six $8\times$
-reconstructions.
+At $2\times$, one output sample in four coincides with a retained sample; at $8\times$ only
+one in sixty-four does, so $63/64$ of the output is estimated. More fundamentally, the block
+average \eqref{eq:box} is a low-pass filter whose cutoff scales as $1/f$, and the content it
+removes is not present in the low-resolution image in any form. Equation~\eqref{eq:interp2d}
+reconstructs intensities \emph{between} known samples; it does not invert a low-pass filter.
+Figure~\ref{fig:crop-mandrill} makes this concrete.
 
 \subsection{Visual differences among the methods}
 
-Nearest neighbour is visibly distinct from everything else. It replicates each input sample
-over an $s \times s$ block, producing hard tile boundaries that are obvious at $8\times$
-(Figure~\ref{fig:sr-airplane}, top row) and still detectable as jagged diagonal edges at
-$2\times$.
+Nearest neighbour is visibly distinct from everything else, replicating each input sample over
+an $s \times s$ block and producing hard tile boundaries that are unmistakable at $8\times$.
+Linear interpolation removes the blocking at the cost of blur, since each output is a convex
+combination of neighbours; it gains $0.59$\,dB over nearest at $2\times$ and $0.48$\,dB at
+$8\times$.
 
-Bilinear removes the blocking but at the cost of noticeable blur, since every interpolated
-pixel is a weighted average of its neighbours. The gain from nearest to bilinear is
-0.59\,dB at $2\times$ and 0.48\,dB at $8\times$ on average.
+Beyond first order the methods converge. The step from linear to quadratic is worth
+$0.73$\,dB at $2\times$; quadratic to cubic $0.12$\,dB; cubic to Lanczos-3 $0.26$\,dB. The
+total spread from quadratic to Lanczos-4 is $0.38$\,dB, against $1.70$\,dB from nearest to
+quadratic. Kernel order past the second therefore buys progressively less.
 
-Beyond first order the methods converge sharply. Biquadratic, bicubic, biquintic and Lanczos-4
-differ by at most 0.06\,dB in the averaged results at any factor, and are visually almost
-indistinguishable in Figures~\ref{fig:sr-airplane}--\ref{fig:sr-stream}. The step from first
-to second order is worth about 1.06\,dB; the step from second to fifth order is worth
-0.05\,dB. Higher kernel order is therefore not monotonically better in any practically
-meaningful sense past the third order, and on SSIM the ordering actually reverses ---
-biquadratic attains the best mean SSIM at all three factors, ahead of bicubic and biquintic.
+Notably, \textbf{Lanczos-3 equals or beats Lanczos-4 on SSIM in all twelve cells} and matches
+it on mean PSNR, at $23\%$ lower cost. Widening the sinc window from $A=3$ to $A=4$ adds two
+further taps per axis whose contribution is dominated by additional ringing rather than
+additional recovered detail. Greater support is not automatically better.
 
 \subsection{Artefacts}
+\label{sec:artefacts}
 
-\textbf{Blocking and staircase.} Confined to nearest neighbour, and worsening with the
-enlargement factor. Figure~\ref{fig:crop-mandrill} shows the $8\times8$ constant tiles
-directly. This is the expected consequence of a zeroth-order kernel, which models intensity as
-constant over the region a pixel represents.
+\textbf{Blocking and staircase} are confined to nearest neighbour and worsen with the
+enlargement factor; Figure~\ref{fig:crop-mandrill} shows the $8\times8$ constant tiles
+directly. This follows from \eqref{eq:k0}, which models intensity as constant over the region
+each sample represents.
 
-\textbf{Blur.} Present in all interpolated results and dominant at $8\times$. It is most
-damaging on textured content, where it is the principal reason the mandrill scores so poorly.
+\textbf{Blur} is present in all interpolated results and dominant at $8\times$. It is most
+damaging on textured content, and is the principal reason the mandrill scores poorly
+throughout.
 
-\textbf{Ringing and overshoot.} Restricted to the kernels of order $\ge 2$, whose impulse
-responses have negative lobes. Near a high-contrast edge these lobes drive the reconstruction
-beyond the range of the surrounding samples, producing a bright band on the light side and a
-dark band on the dark side. This is visible in Figure~\ref{fig:crop-airplane8} at the tail
-lettering and in Figure~\ref{fig:crop-stream} at the railing. Nearest neighbour and bilinear
-have non-negative kernels and cannot overshoot: their outputs are bounded by the convex hull
-of the input samples. All results reported here were clipped to $[0,255]$ before evaluation,
-which suppresses the most extreme excursions but does not remove the halo itself.
+\textbf{Ringing and overshoot} are restricted to kernels \eqref{eq:k2}, \eqref{eq:k3} and
+\eqref{eq:klanczos}, whose negative lobes drive the reconstruction beyond the range of the
+surrounding samples near a high-contrast edge, producing a bright band on the light side and a
+dark band on the dark side. These are visible in Figures~\ref{fig:crop-airplane}
+and~\ref{fig:crop-stream}. Kernels \eqref{eq:k0} and \eqref{eq:k1} are non-negative and, with
+the normalisation \eqref{eq:normalise}, cannot overshoot: their outputs are bounded by the
+convex hull of the contributing samples. All results were clipped by \eqref{eq:clip} before
+evaluation, which truncates the most extreme excursions but does not remove the halo.
 
-\subsection{Reconstruction quality versus runtime}
-\label{sec:disc-runtime}
+\subsection{Measured overshoot}
+\label{sec:overshoot}
 
-Within the scikit-image family the cost scales with the kernel support, as expected: nearest
-neighbour at roughly 1.0\,ms, bilinear at 2.5\,ms, biquadratic at 4.7\,ms, bicubic at 7.0\,ms
-and biquintic at 15.0\,ms on average. The quality returns do not scale similarly. Moving from
-nearest to bilinear costs $2.4\times$ the runtime for 0.55\,dB; from bilinear to biquadratic
-costs a further $1.9\times$ for 0.71\,dB; from biquadratic to biquintic costs $3.2\times$ for
-0.05\,dB. The knee of the curve sits at second or third order, which is consistent with
-bicubic being the conventional default in practice.
+Because the saved outputs are clipped by \eqref{eq:clip}, the excursions are not directly
+observable in any of the figures above. They were therefore measured on the raw, unclipped
+output of \eqref{eq:separable}, before rounding and clipping. Table~\ref{tab:overshoot}
+reports the fraction of output pixels falling outside $[0,255]$ and the extreme values
+reached.
 
-The Lanczos-4 figure requires care. At 0.173\,ms average it is roughly $87\times$ faster than
-biquintic while matching it in quality, but this is not a statement about kernel cost --- a
-windowed-sinc kernel does more arithmetic per output pixel, not less. It reflects the
-implementation: OpenCV uses hand-optimised fixed-point SIMD C++, whereas scikit-image performs
-\texttt{float64} spline pre-filtering followed by evaluation through a more general code path.
-The correct conclusion is that implementation quality dominates kernel order as a determinant
-of wall-clock cost at these image sizes, and that runtime comparisons across libraries should
-not be read as algorithmic comparisons.
+\begin{table}[H]
+\centering
+\caption{Overshoot measured on the unclipped reconstruction. Percentages are the mean over
+the four images; the range columns give the extreme values reached anywhere in the study.}
+\label{tab:overshoot}
+\begin{tabular}{lccc@{\hskip 1.1cm}cc}
+\toprule
+& \multicolumn{3}{c}{Pixels outside $[0,255]$ (\%)} & \multicolumn{2}{c}{Extreme value reached} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}
+Method & $2\times$ & $4\times$ & $8\times$ & minimum & maximum \\
+\midrule
+Nearest (0th)   & 0.0000 & 0.0000 & 0.0000 &   0.00 & 255.00 \\
+Linear (1st)    & 0.0000 & 0.0000 & 0.0000 &   0.00 & 254.94 \\
+Quadratic (2nd) & 0.0396 & 0.0456 & 0.0067 & $-7.27$ & 263.66 \\
+Cubic (3rd)     & 0.0672 & 0.0589 & 0.0155 & $-8.21$ & 265.18 \\
+Lanczos-3       & 0.0690 & 0.0793 & 0.0535 & $-12.78$ & 277.39 \\
+Lanczos-4       & 0.0859 & 0.0795 & 0.0584 & $-14.06$ & 278.24 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-It is also worth noting that runtime is essentially independent of image content --- the
-spread across the four images at a fixed method and factor is small and attributable to
-measurement noise --- and that it varies only weakly with the enlargement factor, since the
-output size is fixed at $512\times512$ and the work is dominated by the number of output
-pixels rather than the number of input samples.
+Three results follow.
+
+\paragraph{The non-negativity argument is confirmed empirically.} Nearest neighbour and linear
+interpolation produce \emph{exactly} zero out-of-range pixels in all twelve image--factor
+cells, with observed minima never below $0$ and maxima never above $255$. This is the
+measured counterpart of the bound argued in Section~\ref{sec:artefacts}: with non-negative
+kernels and the normalisation \eqref{eq:normalise}, the output is a convex combination of its
+input taps and therefore cannot leave their range.
+
+\paragraph{Overshoot grows with kernel support.} The extreme excursion widens monotonically
+from quadratic to Lanczos-4, which reaches $278.24$ --- more than $23$ intensity levels beyond
+white --- and $-14.06$ below black. Each additional pair of taps contributes a further
+negative lobe. This is the quantitative explanation for the result noted earlier that
+Lanczos-3 equals or beats Lanczos-4 on SSIM in all twelve cells: widening the window from
+$A=3$ to $A=4$ increases overshoot without a corresponding gain in recovered detail.
+
+\paragraph{Overshoot requires both negative lobes and content near the range boundary.} The
+per-image figures reveal a condition not visible in the averages. Mandrill, despite being the
+most edge-dense image in the set, produces essentially no overshoot at all --- a single cell
+at $0.0004\%$ and zero everywhere else --- because its intensity range is only $12$ to $214$,
+so the ringing oscillations have headroom and never leave $[0,255]$. Stream produces the most
+($0.33\%$ at $2\times$ for Lanczos-4) because its original saturates at both $0$ and $255$, so
+any oscillation at those edges immediately exceeds the representable range. Negative kernel
+lobes cause \emph{ringing}; whether that ringing manifests as \emph{overshoot} depends on
+whether the underlying content sits near the boundary of the intensity range. The two are
+distinct, and only the latter is affected by clipping.
+
+The dependence on enlargement factor is not monotone and differs by image. On stream the
+overshoot falls with the factor ($0.330 \to 0.266 \to 0.098\%$ for Lanczos-4), because block
+averaging \eqref{eq:box} pulls saturated pixels away from the boundary as $f$ grows. On
+peppers it rises ($0.013 \to 0.052 \to 0.134\%$), because larger blocks make adjacent
+low-resolution samples differ more sharply across an edge, strengthening the ringing itself.
+Both mechanisms are present; which dominates is a property of the image.
+
+\subsection{Quality versus runtime}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\textwidth]{figures_fig8_quality_cost.png}
+\caption{Reconstruction quality against computational cost, one curve per enlargement factor.
+The knee of every curve lies at quadratic interpolation.}
+\label{fig:qualitycost}
+\end{figure}
+
+All three curves in Figure~\ref{fig:qualitycost} have the same shape: a steep initial rise
+followed by a long flat tail. At $2\times$, moving from nearest to quadratic buys $1.32$\,dB
+for $0.30$\,ms; moving from quadratic to Lanczos-4 buys a further $0.38$\,dB for $1.48$\,ms.
+The second purchase costs roughly five times as much for less than a third of the benefit.
+Quadratic or cubic interpolation sits at the knee, which is consistent with cubic convolution
+being the conventional default in practice.
+
+Runtime is essentially independent of image content --- the spread across the four images at
+fixed method and factor is within measurement noise --- and varies only weakly with the
+enlargement factor, since the output size is fixed at $512\times512$ and the work is dominated
+by the number of output pixels rather than input samples.
 
 \subsection{Dependence on image content}
 
-The results depend strongly on content, in two separate ways.
+Content affects the results in two distinct ways.
 
-\textbf{Absolute quality.} At $8\times$, peppers reaches 24.81\,dB while mandrill reaches only
-19.94\,dB --- a gap of almost 5\,dB between the smoothest and the most textured image, under
-identical processing. Smooth regions are well approximated by low-order polynomials, which is
-precisely the assumption every one of these kernels encodes. Dense texture violates it.
+\textbf{Absolute quality.} At $8\times$, peppers reaches $24.81$\,dB while mandrill reaches
+only $19.94$\,dB --- a gap of nearly $5$\,dB under identical processing. Smooth regions are
+well approximated by low-order polynomials, which is exactly what every kernel in
+Section~3.6 assumes. Dense texture violates that assumption.
 
-\textbf{Spread between methods.} The gap between the best and worst method is widest on
-edge-dominated content and narrowest on texture. On airplane at $2\times$ the spread is
-3.04\,dB (28.87 to 31.91); on mandrill at $8\times$ it is 0.24\,dB (19.70 to 19.94). Where
-the signal has been destroyed, the choice of interpolator ceases to matter --- all six methods
-are reconstructing from the same impoverished data and converge to nearly the same answer. In
-flat regions the methods also agree, for the opposite reason: every interpolator returns
-approximately the local mean. It is only at edges, where a genuine decision about the
-intensity profile must be made, that the kernels separate.
+\textbf{Spread between methods.} The gap between best and worst method is widest on
+edge-dominated content and narrowest on texture: $3.03$\,dB on airplane at $2\times$ (28.87 to
+31.90) versus $0.24$\,dB on mandrill at $8\times$ (19.70 to 19.94). Where the signal has been
+destroyed, all six methods reconstruct from the same impoverished data and converge to nearly
+the same answer.
 
 \subsection{A case where nearest neighbour wins}
+\label{sec:anomaly}
 
-One result initially appears anomalous and is worth stating explicitly. On mandrill at
-$2\times$, nearest neighbour outperforms bilinear on both metrics: 23.35\,dB versus 23.17\,dB
-on PSNR, and 0.7546 versus 0.7006 on SSIM. The same inversion appears in the SSIM averages,
-where nearest neighbour beats bilinear at $2\times$ (0.8435 versus 0.8250) and ties it at
-$4\times$.
+On mandrill at $2\times$, nearest neighbour outperforms linear interpolation on both metrics:
+$23.35$ versus $23.17$\,dB, and $0.7306$ versus $0.6729$ on SSIM. The same inversion appears
+on stream at $2\times$ ($0.7838$ versus $0.7556$) and in the SSIM averages, where nearest
+neighbour beats linear at $2\times$ ($0.8286$ versus $0.8098$).
 
 This is not an error. At $2\times$, nearest neighbour reproduces every retained sample exactly
-and preserves local contrast, adding only blocking. Bilinear replaces interpolated pixels with
-weighted averages, which reduces local variance everywhere. On an image whose content is
-almost entirely high-frequency texture, the variance loss costs more than the blocking does.
-SSIM penalises this more sharply than PSNR because its contrast and structure terms respond
-directly to local variance, whereas PSNR sees only squared error. The practical implication is
-that PSNR and SSIM do not always rank methods identically, and that the usual assumption
-``higher order is better'' presumes locally smooth content.
+and preserves local contrast, adding only blocking. Linear interpolation replaces interpolated
+pixels with convex combinations, reducing local variance everywhere. On an image whose content
+is almost entirely high-frequency texture, the variance loss costs more than the blocking
+does. SSIM penalises this more sharply than PSNR because the contrast and structure terms in
+\eqref{eq:ssim} respond directly to $\sigma_{x}^{2}$ and $\sigma_{y}^{2}$ from
+\eqref{eq:moments}, whereas PSNR sees only squared error. Section~\ref{sec:regions} identifies
+the mechanism precisely.
+
+%==========================================================
+\section{Additional investigation: region-wise error decomposition}
+\label{sec:regions}
+
+The discussion above asserts that the advantage of higher-order interpolation is earned at
+edges. That claim was tested directly by splitting the error by local gradient magnitude.
+
+\subsection{Method}
+
+The gradient magnitude of the reference is computed with the Sobel operator, implemented from
+scratch as a pair of $3\times3$ correlations with
+\begin{equation}
+S_{x} = \begin{bmatrix} -1 & 0 & 1 \\ -2 & 0 & 2 \\ -1 & 0 & 1 \end{bmatrix},
+\qquad
+S_{y} = S_{x}^{\mathsf{T}},
+\qquad
+G = \sqrt{(S_{x} * I)^{2} + (S_{y} * I)^{2}} .
+\label{eq:sobel}
+\end{equation}
+Two disjoint masks are then defined by percentile thresholds on $G$: the \emph{edge} mask is
+the top $10\%$ of pixels by gradient magnitude, the \emph{smooth} mask the bottom $50\%$. PSNR
+is recomputed over each mask alone,
+\begin{equation}
+\mathrm{PSNR}_{\mathcal{M}} = 10\log_{10}\!\left(
+\frac{L^{2}\,|\mathcal{M}|}{\sum_{(m,n) \in \mathcal{M}} \big(I(m,n)-\hat{I}(m,n)\big)^{2}}
+\right).
+\label{eq:maskedpsnr}
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures_fig5_masks.png}
+\caption{Gradient-based region masks. The edge masks trace genuine structure on airplane,
+peppers and stream --- the fuselage outline, the pepper boundaries, the bridge railing. On
+mandrill the mask is scattered across the whole frame, because the image has no
+edge/non-edge distinction to make.}
+\label{fig:masks}
+\end{figure}
+
+\subsection{Results}
+
+\begin{table}[H]
+\centering
+\caption{PSNR (dB) computed separately over edge and smooth regions, averaged over the four
+images. Best per column in bold.}
+\label{tab:regions}
+\begin{tabular}{lccc@{\hskip 1.1cm}ccc}
+\toprule
+& \multicolumn{3}{c}{Edge regions (top $10\%$ gradient)}
+& \multicolumn{3}{c}{Smooth regions (bottom $50\%$)} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Method & $2\times$ & $4\times$ & $8\times$ & $2\times$ & $4\times$ & $8\times$ \\
+\midrule
+Nearest (0th)   & 19.62 & 17.28 & 16.06 & \textbf{35.43} & 29.42 & 25.30 \\
+Linear (1st)    & 21.22 & 18.32 & 16.75 & 33.74 & 29.44 & 25.50 \\
+Quadratic (2nd) & 21.72 & 18.53 & 16.85 & 34.62 & 29.94 & 26.01 \\
+Cubic (3rd)     & 21.92 & 18.64 & 16.89 & 34.55 & 30.13 & 26.24 \\
+Lanczos-3       & 22.30 & 18.79 & 16.95 & 34.41 & \textbf{30.18} & \textbf{26.41} \\
+Lanczos-4       & \textbf{22.36} & \textbf{18.80} & \textbf{16.96} & 34.29 & 30.15 & 26.39 \\
+\midrule
+Spread (best $-$ worst) & 2.74 & 1.52 & 0.90 & 1.69 & 0.77 & 1.11 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures_fig6_region_delta.png}
+\caption{Gain over nearest neighbour, split by region type. At $2\times$ every method beats
+nearest at edges and \emph{loses} to it in smooth regions --- a complete crossover with no
+exceptions. By $8\times$ both bars are positive, and for cubic and both Lanczos kernels the
+smooth-region gain exceeds the edge gain.}
+\label{fig:regiondelta}
+\end{figure}
+
+\subsection{Findings}
+
+\paragraph{A complete crossover at $2\times$.} Nearest neighbour attains the \emph{highest}
+smooth-region PSNR of all six methods at $2\times$ ($35.43$\,dB) and the \emph{lowest}
+edge-region PSNR ($19.62$\,dB). The pattern holds on all four images individually --- on
+airplane, $44.22$\,dB smooth against $19.77$\,dB edge. This resolves the anomaly of
+Section~\ref{sec:anomaly}: nearest neighbour is not uniformly worse at $2\times$, it is the
+\emph{best} method on flat regions and the \emph{worst} on edges. Which effect dominates the
+global metric depends on how much of the image is flat, which is why the inversion appears on
+mandrill and stream but not on airplane or peppers.
+
+The mechanism is visible in \eqref{eq:k0} versus \eqref{eq:k1}. At $2\times$ nearest neighbour
+reproduces retained samples exactly and, within a flat region, the replicated block is a
+genuinely better estimate than a smoothed average of neighbours that all differ slightly by
+noise. At an edge, block replication is exactly the wrong model.
+
+\paragraph{The crossover disappears with enlargement.} By $4\times$ the smooth-region bars in
+Figure~\ref{fig:regiondelta} have turned positive, and by $8\times$ the smooth-region gain
+($+1.11$\,dB for Lanczos-3) exceeds the edge gain ($+0.90$\,dB). At high enlargement the
+$8\times8$ tiles produced by \eqref{eq:k0} are so coarse that they damage even flat regions,
+and the advantage of higher-order interpolation becomes universal rather than edge-specific.
+
+\paragraph{Error concentrates at edges, by a content-dependent amount.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figures_fig7_edge_smooth_gap.png}
+\caption{Difference between smooth-region and edge-region PSNR. The ordering tracks how much
+genuinely flat area each image contains.}
+\label{fig:gap}
+\end{figure}
+
+The smooth-to-edge gap ranges from $20.4$\,dB on airplane at $2\times$ down to $8.2$\,dB on
+mandrill, with peppers ($14.8$) and stream ($8.6$) in between --- the same ordering as the
+amount of flat area in each image. Mandrill's small gap is not evidence that it reconstructs
+edges well; it reflects that its "smooth" half is merely the less-textured half of a fully
+textured image, so neither region is reconstructed well and the two scores converge. The gap
+narrows with enlargement for every image, for the same reason the crossover disappears.
+
+\paragraph{The method spread is an edge phenomenon.} At $2\times$ the spread between best and
+worst method is $2.74$\,dB in edge regions but only $1.69$\,dB in smooth regions --- and the
+smooth-region spread is itself mostly the \emph{penalty} incurred by the smoothing methods
+rather than a gain. Kernel choice matters where a genuine decision about the intensity profile
+must be made; in flat regions every kernel returns approximately the local mean regardless of
+its order.
+
+%==========================================================
+\section{Additional investigation: cost scaling of the separable engine}
+\label{sec:cost-scaling}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures_fig9_cost_scaling.png}
+\caption{Measured runtime against taps per axis. Left: runtime is linear in $T$, as
+\eqref{eq:separable} predicts. Right: the apparent cost per tap falls with $T$ because the
+fixed per-call overhead amortises.}
+\label{fig:costscaling}
+\end{figure}
+
+Section~3.4 predicts that the separable formulation \eqref{eq:separable} costs
+$\mathcal{O}(2T)$ per output pixel rather than the $\mathcal{O}(T^{2})$ of the direct form.
+Fitting the measured mean runtime against $T$ gives
+\begin{equation}
+t(T) \;\approx\; 0.234\,T + 0.230 \quad \text{ms},
+\label{eq:costfit}
+\end{equation}
+which is linear in $T$ across the full range $T = 2$ to $T = 9$, confirming the prediction.
+A direct $\mathcal{O}(T^{2})$ implementation would have curved upward, costing roughly
+$4.5\times$ more than measured at $T = 9$.
+
+The right panel of Figure~\ref{fig:costscaling} shows the apparent cost per tap falling from
+$0.379$\,ms at $T=2$ to $0.261$\,ms at $T=7$. This is not a violation of linearity: it is the
+constant term in \eqref{eq:costfit}. The $0.230$\,ms intercept is per-call overhead --- array
+allocation, construction of the weight matrices, and tensor-contraction setup --- which is
+independent of $T$. It accounts for $30\%$ of the runtime of the nearest-neighbour kernel but
+only $10\%$ of Lanczos-4's. The \emph{marginal} cost of an additional tap is constant at
+$0.234$\,ms, which is the quantity \eqref{eq:separable} actually predicts.
 
 %==========================================================
 \section{Conclusion}
 
-Across four images, three enlargement factors and six interpolation methods, the results
-support four conclusions. Reconstruction quality degrades monotonically with the enlargement
-factor and cannot recover frequencies removed during downsampling. The largest quality gain
-comes from moving off zeroth order; gains beyond second or third order are negligible while
-costs continue to grow. Each kernel family has a characteristic artefact --- blocking for
-zeroth order, blur for first order, ringing for orders two and above --- and the choice among
-them is a trade between these rather than a strict ordering. Finally, all of these effects
-are modulated by image content: on smooth images every method performs well and similarly, on
-edge-dominated images the method choice matters most, and on heavily textured images at high
-enlargement factors no interpolation method performs well at all.
+Across four images, three enlargement factors and six kernels implemented from first
+principles, five conclusions are supported.
+
+Reconstruction quality degrades monotonically with the enlargement factor and cannot recover
+frequencies removed by the downsampling filter \eqref{eq:box}. The largest quality gain comes
+from moving off zeroth order; gains beyond second or third order are small while cost
+continues to grow linearly with kernel support. Each kernel family carries a characteristic
+artefact --- blocking for the zeroth order, blur for the first, ringing for the negative-lobe
+kernels --- so the choice among them is a trade rather than a strict ordering, as Lanczos-3
+outscoring Lanczos-4 demonstrates. Direct measurement of the unclipped output confirms that
+the non-negative kernels never leave $[0,255]$ while Lanczos-4 exceeds it by up to $23$
+intensity levels, and shows that overshoot requires content near the boundary of the intensity
+range in addition to negative kernel lobes.
+
+The region-wise decomposition shows that these effects are not uniform over the image. At
+$2\times$, higher-order interpolation improves edges and actively \emph{degrades} smooth
+regions relative to nearest neighbour, a complete crossover across all four images that
+explains why nearest neighbour wins outright on texture-dominated content. Only at high
+enlargement does higher-order interpolation become universally beneficial.
+
+Finally, the measured runtime confirms the $\mathcal{O}(2T)$ cost of the separable
+formulation, with a constant marginal cost of $0.234$\,ms per tap and a fixed $0.230$\,ms
+per-call overhead.
 
 %==========================================================
 \section*{Reproducibility}
 
-All results were generated by the accompanying Python notebook. Per-configuration numbers are
-written to \texttt{results/metrics.csv} (72 rows); every table in this report is derived from
-that file. The pipeline contains no stochastic component and reproduces bit-identically on
-re-run. Libraries used: NumPy, OpenCV, scikit-image, SciPy, pandas, Matplotlib.
+All results were generated by the accompanying Python notebook. Per-configuration values are
+written to \texttt{results/metrics.csv}, \texttt{results/metrics\_regions.csv} and
+\texttt{results/metrics\_overshoot.csv} (72 rows each); every table in this report is derived
+from those files. The pipeline contains no
+stochastic component and reproduces bit-identically on re-run. NumPy is used for array
+arithmetic, Pillow for TIFF reading, pandas for tabulation and Matplotlib for figures; no
+library implementation of any algorithm described in Section~3 is used.
 
 \end{document}

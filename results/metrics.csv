@@ -1,73 +1,73 @@
-image,factor,input_size,method,order,lib,psnr,ssim,runtime_ms_mean,runtime_ms_std
-mandrill,2,256,Nearest (0th),0,skimage,23.35,0.7546,1.332,0.064
-mandrill,2,256,Bilinear (1st),1,skimage,23.17,0.7006,2.991,0.412
-mandrill,2,256,Biquadratic (2nd),2,skimage,23.87,0.7676,5.095,0.18
-mandrill,2,256,Bicubic (3rd),3,skimage,23.81,0.764,7.466,0.163
-mandrill,2,256,Biquintic (5th),5,skimage,23.79,0.7667,15.893,0.464
-mandrill,2,256,Lanczos-4,-1,opencv,23.8,0.7669,0.219,0.012
-mandrill,4,128,Nearest (0th),0,skimage,20.85,0.4839,1.001,0.018
-mandrill,4,128,Bilinear (1st),1,skimage,20.89,0.4512,2.338,0.061
-mandrill,4,128,Biquadratic (2nd),2,skimage,21.11,0.494,4.4,0.23
-mandrill,4,128,Bicubic (3rd),3,skimage,21.08,0.4921,6.671,0.192
-mandrill,4,128,Biquintic (5th),5,skimage,21.07,0.4943,14.695,0.471
-mandrill,4,128,Lanczos-4,-1,opencv,21.07,0.4945,0.166,0.006
-mandrill,8,64,Nearest (0th),0,skimage,19.7,0.2974,1.033,0.08
-mandrill,8,64,Bilinear (1st),1,skimage,19.8,0.2978,2.543,0.149
-mandrill,8,64,Biquadratic (2nd),2,skimage,19.94,0.3154,4.204,0.109
-mandrill,8,64,Bicubic (3rd),3,skimage,19.94,0.3143,6.648,0.195
-mandrill,8,64,Biquintic (5th),5,skimage,19.94,0.315,13.806,0.348
-mandrill,8,64,Lanczos-4,-1,opencv,19.94,0.315,0.137,0.006
-airplane,2,256,Nearest (0th),0,skimage,28.87,0.9278,1.019,0.014
-airplane,2,256,Bilinear (1st),1,skimage,30.11,0.9327,2.404,0.113
-airplane,2,256,Biquadratic (2nd),2,skimage,31.68,0.9525,5.066,0.199
-airplane,2,256,Bicubic (3rd),3,skimage,31.77,0.9524,7.872,0.645
-airplane,2,256,Biquintic (5th),5,skimage,31.91,0.9527,16.119,0.539
-airplane,2,256,Lanczos-4,-1,opencv,31.9,0.9527,0.213,0.001
-airplane,4,128,Nearest (0th),0,skimage,24.7,0.8042,1.061,0.126
-airplane,4,128,Bilinear (1st),1,skimage,25.49,0.8191,2.421,0.126
-airplane,4,128,Biquadratic (2nd),2,skimage,26.38,0.845,5.222,1.877
-airplane,4,128,Bicubic (3rd),3,skimage,26.42,0.8443,6.84,0.238
-airplane,4,128,Biquintic (5th),5,skimage,26.49,0.8438,14.52,0.486
-airplane,4,128,Lanczos-4,-1,opencv,26.48,0.8438,0.172,0.014
-airplane,8,64,Nearest (0th),0,skimage,21.73,0.6517,0.998,0.026
-airplane,8,64,Bilinear (1st),1,skimage,22.22,0.6843,2.46,0.082
-airplane,8,64,Biquadratic (2nd),2,skimage,22.73,0.699,4.356,0.222
-airplane,8,64,Bicubic (3rd),3,skimage,22.73,0.6974,6.748,0.312
-airplane,8,64,Biquintic (5th),5,skimage,22.76,0.6958,14.755,0.402
-airplane,8,64,Lanczos-4,-1,opencv,22.75,0.6947,0.14,0.009
-peppers,2,256,Nearest (0th),0,skimage,29.86,0.8845,1.006,0.017
-peppers,2,256,Bilinear (1st),1,skimage,30.98,0.8861,2.821,0.411
-peppers,2,256,Biquadratic (2nd),2,skimage,31.96,0.901,5.18,0.256
-peppers,2,256,Bicubic (3rd),3,skimage,31.99,0.8998,7.579,0.268
-peppers,2,256,Biquintic (5th),5,skimage,32.04,0.899,16.066,0.647
-peppers,2,256,Lanczos-4,-1,opencv,32.04,0.8992,0.214,0.002
-peppers,4,128,Nearest (0th),0,skimage,26.01,0.7736,1.012,0.009
-peppers,4,128,Bilinear (1st),1,skimage,27.21,0.8032,2.473,0.121
-peppers,4,128,Biquadratic (2nd),2,skimage,28.05,0.8226,4.399,0.12
-peppers,4,128,Bicubic (3rd),3,skimage,28.09,0.822,6.631,0.125
-peppers,4,128,Biquintic (5th),5,skimage,28.15,0.8211,14.377,0.513
-peppers,4,128,Lanczos-4,-1,opencv,28.14,0.8208,0.165,0.006
-peppers,8,64,Nearest (0th),0,skimage,22.85,0.6133,0.997,0.03
-peppers,8,64,Bilinear (1st),1,skimage,23.88,0.6906,2.359,0.044
-peppers,8,64,Biquadratic (2nd),2,skimage,24.71,0.7105,4.123,0.109
-peppers,8,64,Bicubic (3rd),3,skimage,24.75,0.7097,6.695,0.163
-peppers,8,64,Biquintic (5th),5,skimage,24.81,0.7077,14.225,0.536
-peppers,8,64,Lanczos-4,-1,opencv,24.81,0.7068,0.137,0.003
-stream,2,256,Nearest (0th),0,skimage,25.68,0.8069,1.074,0.011
-stream,2,256,Bilinear (1st),1,skimage,25.85,0.7804,2.444,0.134
-stream,2,256,Biquadratic (2nd),2,skimage,26.84,0.8353,5.544,0.751
-stream,2,256,Bicubic (3rd),3,skimage,26.8,0.8338,7.567,0.245
-stream,2,256,Biquintic (5th),5,skimage,26.83,0.8363,15.928,0.477
-stream,2,256,Lanczos-4,-1,opencv,26.83,0.8364,0.215,0.003
-stream,4,128,Nearest (0th),0,skimage,22.27,0.555,1.039,0.027
-stream,4,128,Bilinear (1st),1,skimage,22.67,0.5414,2.486,0.042
-stream,4,128,Biquadratic (2nd),2,skimage,23.14,0.5887,4.313,0.106
-stream,4,128,Bicubic (3rd),3,skimage,23.14,0.5877,6.877,0.215
-stream,4,128,Biquintic (5th),5,skimage,23.16,0.5901,14.99,0.436
-stream,4,128,Lanczos-4,-1,opencv,23.16,0.5904,0.163,0.003
-stream,8,64,Nearest (0th),0,skimage,20.28,0.3329,1.064,0.022
-stream,8,64,Bilinear (1st),1,skimage,20.58,0.3457,2.534,0.032
-stream,8,64,Biquadratic (2nd),2,skimage,20.92,0.3683,4.24,0.132
-stream,8,64,Bicubic (3rd),3,skimage,20.91,0.3663,6.805,0.181
-stream,8,64,Biquintic (5th),5,skimage,20.91,0.3664,14.655,0.635
-stream,8,64,Lanczos-4,-1,opencv,20.91,0.3664,0.142,0.009
+image,factor,input_size,method,order,psnr,ssim,runtime_ms_mean,runtime_ms_std
+mandrill,2,256,Nearest (0th),0,23.35,0.7306,1.778,0.857
+mandrill,2,256,Linear (1st),1,23.17,0.6729,1.102,0.061
+mandrill,2,256,Quadratic (2nd),2,23.74,0.7296,1.318,0.038
+mandrill,2,256,Cubic (3rd),3,23.75,0.7307,1.527,0.047
+mandrill,2,256,Lanczos-3,-1,23.83,0.7428,2.029,0.039
+mandrill,2,256,Lanczos-4,-1,23.8,0.7419,2.773,0.114
+mandrill,4,128,Nearest (0th),0,20.85,0.451,0.645,0.014
+mandrill,4,128,Linear (1st),1,20.89,0.4254,0.846,0.019
+mandrill,4,128,Quadratic (2nd),2,21.06,0.4528,1.088,0.049
+mandrill,4,128,Cubic (3rd),3,21.08,0.4555,1.352,0.048
+mandrill,4,128,Lanczos-3,-1,21.09,0.4617,1.75,0.079
+mandrill,4,128,Lanczos-4,-1,21.07,0.461,2.268,0.078
+mandrill,8,64,Nearest (0th),0,19.7,0.2942,0.611,0.018
+mandrill,8,64,Linear (1st),1,19.8,0.299,0.816,0.021
+mandrill,8,64,Quadratic (2nd),2,19.89,0.3086,1.05,0.019
+mandrill,8,64,Cubic (3rd),3,19.92,0.3101,1.289,0.057
+mandrill,8,64,Lanczos-3,-1,19.94,0.3125,1.675,0.034
+mandrill,8,64,Lanczos-4,-1,19.94,0.312,2.036,0.062
+airplane,2,256,Nearest (0th),0,28.87,0.9241,0.757,0.029
+airplane,2,256,Linear (1st),1,30.11,0.9312,0.994,0.018
+airplane,2,256,Quadratic (2nd),2,31.09,0.9463,1.33,0.021
+airplane,2,256,Cubic (3rd),3,31.34,0.9484,1.529,0.031
+airplane,2,256,Lanczos-3,-1,31.85,0.9526,2.115,0.104
+airplane,2,256,Lanczos-4,-1,31.9,0.9524,2.972,0.219
+airplane,4,128,Nearest (0th),0,24.7,0.7935,0.683,0.055
+airplane,4,128,Linear (1st),1,25.49,0.8175,0.828,0.052
+airplane,4,128,Quadratic (2nd),2,25.99,0.8332,1.114,0.06
+airplane,4,128,Cubic (3rd),3,26.2,0.8371,1.381,0.087
+airplane,4,128,Lanczos-3,-1,26.46,0.8403,1.763,0.119
+airplane,4,128,Lanczos-4,-1,26.48,0.8395,2.295,0.151
+airplane,8,64,Nearest (0th),0,21.73,0.6576,0.623,0.054
+airplane,8,64,Linear (1st),1,22.22,0.6971,0.825,0.057
+airplane,8,64,Quadratic (2nd),2,22.52,0.7055,1.056,0.066
+airplane,8,64,Cubic (3rd),3,22.63,0.7078,1.286,0.034
+airplane,8,64,Lanczos-3,-1,22.75,0.7072,1.697,0.085
+airplane,8,64,Lanczos-4,-1,22.75,0.7061,2.107,0.046
+peppers,2,256,Nearest (0th),0,29.86,0.8757,0.743,0.023
+peppers,2,256,Linear (1st),1,30.98,0.8793,0.963,0.041
+peppers,2,256,Quadratic (2nd),2,31.64,0.8919,1.348,0.013
+peppers,2,256,Cubic (3rd),3,31.78,0.8926,1.551,0.028
+peppers,2,256,Lanczos-3,-1,32.03,0.8939,2.021,0.055
+peppers,2,256,Lanczos-4,-1,32.04,0.8928,2.817,0.102
+peppers,4,128,Nearest (0th),0,26.01,0.7551,0.638,0.014
+peppers,4,128,Linear (1st),1,27.21,0.7967,0.852,0.024
+peppers,4,128,Quadratic (2nd),2,27.66,0.8079,1.082,0.03
+peppers,4,128,Cubic (3rd),3,27.89,0.8117,1.354,0.035
+peppers,4,128,Lanczos-3,-1,28.12,0.8133,1.774,0.041
+peppers,4,128,Lanczos-4,-1,28.14,0.8126,2.292,0.122
+peppers,8,64,Nearest (0th),0,22.85,0.6143,0.596,0.026
+peppers,8,64,Linear (1st),1,23.88,0.6981,0.818,0.02
+peppers,8,64,Quadratic (2nd),2,24.32,0.7067,1.059,0.029
+peppers,8,64,Cubic (3rd),3,24.55,0.7121,1.292,0.042
+peppers,8,64,Lanczos-3,-1,24.79,0.7136,1.636,0.036
+peppers,8,64,Lanczos-4,-1,24.81,0.7126,2.124,0.047
+stream,2,256,Nearest (0th),0,25.68,0.7838,0.766,0.018
+stream,2,256,Linear (1st),1,25.85,0.7556,0.988,0.022
+stream,2,256,Quadratic (2nd),2,26.58,0.8009,1.241,0.041
+stream,2,256,Cubic (3rd),3,26.65,0.8037,1.602,0.075
+stream,2,256,Lanczos-3,-1,26.85,0.8154,2.064,0.05
+stream,2,256,Lanczos-4,-1,26.83,0.8152,2.58,0.07
+stream,4,128,Nearest (0th),0,22.27,0.5163,0.646,0.078
+stream,4,128,Linear (1st),1,22.67,0.5132,0.836,0.033
+stream,4,128,Quadratic (2nd),2,22.97,0.5425,1.117,0.03
+stream,4,128,Cubic (3rd),3,23.06,0.5474,1.356,0.172
+stream,4,128,Lanczos-3,-1,23.16,0.5555,1.743,0.039
+stream,4,128,Lanczos-4,-1,23.16,0.5554,2.22,0.082
+stream,8,64,Nearest (0th),0,20.28,0.3281,0.616,0.018
+stream,8,64,Linear (1st),1,20.58,0.3462,0.826,0.028
+stream,8,64,Quadratic (2nd),2,20.8,0.3599,1.052,0.032
+stream,8,64,Cubic (3rd),3,20.86,0.3617,1.291,0.035
+stream,8,64,Lanczos-3,-1,20.92,0.3635,1.656,0.041
+stream,8,64,Lanczos-4,-1,20.91,0.3627,2.104,0.06

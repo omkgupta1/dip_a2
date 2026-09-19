@@ -1,0 +1,73 @@
+image,factor,method,psnr_edge,psnr_smooth
+mandrill,2,Nearest (0th),18.03,28.23
+mandrill,2,Linear (1st),19.28,26.79
+mandrill,2,Quadratic (2nd),19.45,27.63
+mandrill,2,Cubic (3rd),19.59,27.56
+mandrill,2,Lanczos-3,19.79,27.55
+mandrill,2,Lanczos-4,19.82,27.47
+mandrill,4,Nearest (0th),17.1,24.22
+mandrill,4,Linear (1st),17.36,24.11
+mandrill,4,Quadratic (2nd),17.46,24.35
+mandrill,4,Cubic (3rd),17.48,24.38
+mandrill,4,Lanczos-3,17.5,24.4
+mandrill,4,Lanczos-4,17.49,24.38
+mandrill,8,Nearest (0th),16.47,22.46
+mandrill,8,Linear (1st),16.58,22.55
+mandrill,8,Quadratic (2nd),16.61,22.72
+mandrill,8,Cubic (3rd),16.61,22.78
+mandrill,8,Lanczos-3,16.62,22.84
+mandrill,8,Lanczos-4,16.62,22.83
+airplane,2,Nearest (0th),19.77,44.22
+airplane,2,Linear (1st),21.73,41.49
+airplane,2,Quadratic (2nd),22.41,42.73
+airplane,2,Cubic (3rd),22.68,42.61
+airplane,2,Lanczos-3,23.23,42.27
+airplane,2,Lanczos-4,23.32,42.07
+airplane,4,Nearest (0th),16.81,34.79
+airplane,4,Linear (1st),18.12,34.89
+airplane,4,Quadratic (2nd),18.4,35.63
+airplane,4,Cubic (3rd),18.54,35.97
+airplane,4,Lanczos-3,18.76,36.01
+airplane,4,Lanczos-4,18.8,35.94
+airplane,8,Nearest (0th),15.32,28.72
+airplane,8,Linear (1st),16.09,28.89
+airplane,8,Quadratic (2nd),16.18,29.6
+airplane,8,Cubic (3rd),16.2,29.92
+airplane,8,Lanczos-3,16.24,30.14
+airplane,8,Lanczos-4,16.25,30.1
+peppers,2,Nearest (0th),21.0,38.54
+peppers,2,Linear (1st),22.69,37.45
+peppers,2,Quadratic (2nd),23.3,37.96
+peppers,2,Cubic (3rd),23.5,37.89
+peppers,2,Lanczos-3,23.9,37.69
+peppers,2,Lanczos-4,23.97,37.57
+peppers,4,Nearest (0th),17.89,33.22
+peppers,4,Linear (1st),19.38,33.42
+peppers,4,Quadratic (2nd),19.69,34.0
+peppers,4,Cubic (3rd),19.86,34.26
+peppers,4,Lanczos-3,20.09,34.31
+peppers,4,Lanczos-4,20.12,34.27
+peppers,8,Nearest (0th),16.05,27.86
+peppers,8,Linear (1st),17.29,28.27
+peppers,8,Quadratic (2nd),17.47,29.07
+peppers,8,Cubic (3rd),17.59,29.5
+peppers,8,Lanczos-3,17.74,29.82
+peppers,8,Lanczos-4,17.76,29.8
+stream,2,Nearest (0th),19.68,30.72
+stream,2,Linear (1st),21.2,29.22
+stream,2,Quadratic (2nd),21.72,30.17
+stream,2,Cubic (3rd),21.89,30.13
+stream,2,Lanczos-3,22.27,30.13
+stream,2,Lanczos-4,22.32,30.06
+stream,4,Nearest (0th),17.34,25.45
+stream,4,Linear (1st),18.42,25.32
+stream,4,Quadratic (2nd),18.58,25.78
+stream,4,Cubic (3rd),18.68,25.91
+stream,4,Lanczos-3,18.8,26.02
+stream,4,Lanczos-4,18.81,26.0
+stream,8,Nearest (0th),16.39,22.16
+stream,8,Linear (1st),17.04,22.27
+stream,8,Quadratic (2nd),17.14,22.64
+stream,8,Cubic (3rd),17.17,22.75
+stream,8,Lanczos-3,17.2,22.85
+stream,8,Lanczos-4,17.2,22.84

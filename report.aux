@@ -1,0 +1,128 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Objective and scope}{2}{section.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Super-resolution settings.}}{2}{table.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:settings}{{1}{2}{Super-resolution settings}{table.caption.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Dataset}{2}{section.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Selected images. All converted to 8-bit grayscale at $512\times 512$ before processing.}}{2}{table.caption.3}\protected@file@percent }
+\newlabel{tab:dataset}{{2}{2}{Selected images. All converted to 8-bit grayscale at $512\times 512$ before processing}{table.caption.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces The four original grayscale reference images ($512\times 512$, 8\,bpp). These are the ground truth for all PSNR and SSIM computations.}}{2}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:originals}{{1}{2}{The four original grayscale reference images ($512\times 512$, 8\,bpp). These are the ground truth for all PSNR and SSIM computations}{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Method: formulation and implementation}{3}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Grayscale conversion}{3}{subsection.3.1}\protected@file@percent }
+\newlabel{eq:luma}{{1}{3}{Grayscale conversion}{equation.1}{}}
+\newlabel{eq:clip}{{2}{3}{Grayscale conversion}{equation.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Downsampling by exact block averaging}{3}{subsection.3.2}\protected@file@percent }
+\newlabel{eq:box}{{3}{3}{Downsampling by exact block averaging}{equation.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Coordinate mapping}{3}{subsection.3.3}\protected@file@percent }
+\newlabel{eq:coord}{{4}{3}{Coordinate mapping}{equation.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Separable interpolation}{3}{subsection.3.4}\protected@file@percent }
+\newlabel{eq:interp2d}{{5}{3}{Separable interpolation}{equation.5}{}}
+\newlabel{eq:separable}{{6}{3}{Separable interpolation}{equation.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Boundary handling and weight normalisation}{4}{subsection.3.5}\protected@file@percent }
+\newlabel{eq:normalise}{{9}{4}{Boundary handling and weight normalisation}{equation.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Interpolation kernels}{4}{subsection.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Zeroth order (nearest neighbour).}{4}{section*.5}\protected@file@percent }
+\newlabel{eq:k0}{{10}{4}{Zeroth order (nearest neighbour)}{equation.10}{}}
+\@writefile{toc}{\contentsline {paragraph}{First order (linear).}{4}{section*.6}\protected@file@percent }
+\newlabel{eq:k1}{{11}{4}{First order (linear)}{equation.11}{}}
+\@writefile{toc}{\contentsline {paragraph}{Second order (Dodgson quadratic, $r=1$).}{4}{section*.7}\protected@file@percent }
+\newlabel{eq:k2}{{12}{4}{Second order (Dodgson quadratic, $r=1$)}{equation.12}{}}
+\@writefile{toc}{\contentsline {paragraph}{Third order (Keys cubic convolution, $a = -\tfrac  {1}{2}$).}{4}{section*.8}\protected@file@percent }
+\newlabel{eq:k3}{{13}{4}{Third order (Keys cubic convolution, $a = -\tfrac {1}{2}$)}{equation.13}{}}
+\@writefile{toc}{\contentsline {paragraph}{Windowed sinc (Lanczos-$A$, $A \in \{3,4\}$).}{5}{section*.9}\protected@file@percent }
+\newlabel{eq:klanczos}{{14}{5}{Windowed sinc (Lanczos-$A$, $A \in \{3,4\}$)}{equation.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}PSNR}{5}{subsection.3.7}\protected@file@percent }
+\newlabel{eq:psnr}{{15}{5}{PSNR}{equation.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.8}SSIM}{5}{subsection.3.8}\protected@file@percent }
+\newlabel{eq:gauss}{{16}{5}{SSIM}{equation.16}{}}
+\newlabel{eq:moments}{{17}{5}{SSIM}{equation.17}{}}
+\newlabel{eq:ssim}{{18}{5}{SSIM}{equation.18}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.9}Measurement protocol}{5}{subsection.3.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Implementation validation}{6}{section.4}\protected@file@percent }
+\newlabel{sec:validation}{{4}{6}{Implementation validation}{section.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{1. The worked example from the assignment prelude.}{6}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{2. Constant reproduction.}{6}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{3. Agreement with reference implementations.}{6}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Results}{7}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Downsampled inputs}{7}{subsection.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Original and downsampled versions of each image, displayed at true relative scale. The loss of fur texture in the $64\times 64$ mandrill is total.}}{7}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:downsampled}{{2}{7}{Original and downsampled versions of each image, displayed at true relative scale. The loss of fur texture in the $64\times 64$ mandrill is total}{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Super-resolved outputs}{8}{subsection.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Super-resolved results for \emph  {airplane}: rows are interpolation methods, columns are enlargement factors.}}{8}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:sr-airplane}{{3}{8}{Super-resolved results for \emph {airplane}: rows are interpolation methods, columns are enlargement factors}{figure.caption.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Super-resolved results for \emph  {mandrill}.}}{9}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:sr-mandrill}{{4}{9}{Super-resolved results for \emph {mandrill}}{figure.caption.15}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Super-resolved results for \emph  {peppers}.}}{10}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:sr-peppers}{{5}{10}{Super-resolved results for \emph {peppers}}{figure.caption.16}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Super-resolved results for \emph  {stream and bridge}.}}{11}{figure.caption.17}\protected@file@percent }
+\newlabel{fig:sr-stream}{{6}{11}{Super-resolved results for \emph {stream and bridge}}{figure.caption.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Magnified crops}{11}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces \emph  {Mandrill}, $8\times $, magnified crop. The original contains individual fur strands and a sharp eye boundary. Nearest neighbour reproduces the input as $8\times 8$ constant tiles; every higher-order method produces a smooth blob. No method recovers a single strand.}}{12}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:crop-mandrill}{{7}{12}{\emph {Mandrill}, $8\times $, magnified crop. The original contains individual fur strands and a sharp eye boundary. Nearest neighbour reproduces the input as $8\times 8$ constant tiles; every higher-order method produces a smooth blob. No method recovers a single strand}{figure.caption.18}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces \emph  {Airplane}, $8\times $, magnified crop of the tail lettering against sky --- the configuration in which ringing from the negative kernel lobes is visible.}}{12}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:crop-airplane}{{8}{12}{\emph {Airplane}, $8\times $, magnified crop of the tail lettering against sky --- the configuration in which ringing from the negative kernel lobes is visible}{figure.caption.19}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces \emph  {Stream and bridge}, $8\times $, magnified crop of the railing against the dark background --- staircase artefacts in nearest neighbour, halos in the higher orders.}}{12}{figure.caption.20}\protected@file@percent }
+\newlabel{fig:crop-stream}{{9}{12}{\emph {Stream and bridge}, $8\times $, magnified crop of the railing against the dark background --- staircase artefacts in nearest neighbour, halos in the higher orders}{figure.caption.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces \emph  {Peppers}, $8\times $, magnified crop at a bright rim against a dark pepper body.}}{12}{figure.caption.21}\protected@file@percent }
+\newlabel{fig:crop-peppers}{{10}{12}{\emph {Peppers}, $8\times $, magnified crop at a bright rim against a dark pepper body}{figure.caption.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}PSNR}{13}{subsection.5.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces PSNR (dB) with respect to the original $512\times 512$ grayscale image. Higher is better; best per column in bold.}}{13}{table.caption.22}\protected@file@percent }
+\newlabel{tab:psnr}{{3}{13}{PSNR (dB) with respect to the original $512\times 512$ grayscale image. Higher is better; best per column in bold}{table.caption.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}SSIM}{14}{subsection.5.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces SSIM with respect to the original $512\times 512$ grayscale image. Higher is better; best per column in bold.}}{14}{table.caption.23}\protected@file@percent }
+\newlabel{tab:ssim}{{4}{14}{SSIM with respect to the original $512\times 512$ grayscale image. Higher is better; best per column in bold}{table.caption.23}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces PSNR and SSIM averaged over the four images. Best per column in bold.}}{14}{table.caption.24}\protected@file@percent }
+\newlabel{tab:mean}{{5}{14}{PSNR and SSIM averaged over the four images. Best per column in bold}{table.caption.24}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}Runtime}{15}{subsection.5.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Runtime in milliseconds, averaged over the four images. Each per-image value is the median of 15 timed runs after three warm-up calls, and covers the interpolation call only. $T$ is the number of taps per axis.}}{15}{table.caption.25}\protected@file@percent }
+\newlabel{tab:runtime}{{6}{15}{Runtime in milliseconds, averaged over the four images. Each per-image value is the median of 15 timed runs after three warm-up calls, and covers the interpolation call only. $T$ is the number of taps per axis}{table.caption.25}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Quality versus cost, averaged over all images and all enlargement factors.}}{15}{table.caption.26}\protected@file@percent }
+\newlabel{tab:summary}{{7}{15}{Quality versus cost, averaged over all images and all enlargement factors}{table.caption.26}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Discussion}{15}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Quality across enlargement factors}{15}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Visual differences among the methods}{15}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Artefacts}{16}{subsection.6.3}\protected@file@percent }
+\newlabel{sec:artefacts}{{6.3}{16}{Artefacts}{subsection.6.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Measured overshoot}{16}{subsection.6.4}\protected@file@percent }
+\newlabel{sec:overshoot}{{6.4}{16}{Measured overshoot}{subsection.6.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Overshoot measured on the unclipped reconstruction. Percentages are the mean over the four images; the range columns give the extreme values reached anywhere in the study.}}{16}{table.caption.27}\protected@file@percent }
+\newlabel{tab:overshoot}{{8}{16}{Overshoot measured on the unclipped reconstruction. Percentages are the mean over the four images; the range columns give the extreme values reached anywhere in the study}{table.caption.27}{}}
+\@writefile{toc}{\contentsline {paragraph}{The non-negativity argument is confirmed empirically.}{16}{section*.28}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Overshoot grows with kernel support.}{16}{section*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Overshoot requires both negative lobes and content near the range boundary.}{17}{section*.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Quality versus runtime}{17}{subsection.6.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Reconstruction quality against computational cost, one curve per enlargement factor. The knee of every curve lies at quadratic interpolation.}}{17}{figure.caption.31}\protected@file@percent }
+\newlabel{fig:qualitycost}{{11}{17}{Reconstruction quality against computational cost, one curve per enlargement factor. The knee of every curve lies at quadratic interpolation}{figure.caption.31}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}Dependence on image content}{17}{subsection.6.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}A case where nearest neighbour wins}{18}{subsection.6.7}\protected@file@percent }
+\newlabel{sec:anomaly}{{6.7}{18}{A case where nearest neighbour wins}{subsection.6.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Additional investigation: region-wise error decomposition}{18}{section.7}\protected@file@percent }
+\newlabel{sec:regions}{{7}{18}{Additional investigation: region-wise error decomposition}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Method}{18}{subsection.7.1}\protected@file@percent }
+\newlabel{eq:sobel}{{19}{18}{Method}{equation.19}{}}
+\newlabel{eq:maskedpsnr}{{20}{18}{Method}{equation.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Gradient-based region masks. The edge masks trace genuine structure on airplane, peppers and stream --- the fuselage outline, the pepper boundaries, the bridge railing. On mandrill the mask is scattered across the whole frame, because the image has no edge/non-edge distinction to make.}}{19}{figure.caption.32}\protected@file@percent }
+\newlabel{fig:masks}{{12}{19}{Gradient-based region masks. The edge masks trace genuine structure on airplane, peppers and stream --- the fuselage outline, the pepper boundaries, the bridge railing. On mandrill the mask is scattered across the whole frame, because the image has no edge/non-edge distinction to make}{figure.caption.32}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Results}{19}{subsection.7.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces PSNR (dB) computed separately over edge and smooth regions, averaged over the four images. Best per column in bold.}}{19}{table.caption.33}\protected@file@percent }
+\newlabel{tab:regions}{{9}{19}{PSNR (dB) computed separately over edge and smooth regions, averaged over the four images. Best per column in bold}{table.caption.33}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Gain over nearest neighbour, split by region type. At $2\times $ every method beats nearest at edges and \emph  {loses} to it in smooth regions --- a complete crossover with no exceptions. By $8\times $ both bars are positive, and for cubic and both Lanczos kernels the smooth-region gain exceeds the edge gain.}}{20}{figure.caption.34}\protected@file@percent }
+\newlabel{fig:regiondelta}{{13}{20}{Gain over nearest neighbour, split by region type. At $2\times $ every method beats nearest at edges and \emph {loses} to it in smooth regions --- a complete crossover with no exceptions. By $8\times $ both bars are positive, and for cubic and both Lanczos kernels the smooth-region gain exceeds the edge gain}{figure.caption.34}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Findings}{20}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{A complete crossover at $2\times $.}{20}{section*.35}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The crossover disappears with enlargement.}{20}{section*.36}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Difference between smooth-region and edge-region PSNR. The ordering tracks how much genuinely flat area each image contains.}}{21}{figure.caption.38}\protected@file@percent }
+\newlabel{fig:gap}{{14}{21}{Difference between smooth-region and edge-region PSNR. The ordering tracks how much genuinely flat area each image contains}{figure.caption.38}{}}
+\@writefile{toc}{\contentsline {paragraph}{Error concentrates at edges, by a content-dependent amount.}{21}{figure.caption.38}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The method spread is an edge phenomenon.}{21}{section*.39}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Additional investigation: cost scaling of the separable engine}{21}{section.8}\protected@file@percent }
+\newlabel{sec:cost-scaling}{{8}{21}{Additional investigation: cost scaling of the separable engine}{section.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Measured runtime against taps per axis. Left: runtime is linear in $T$, as \eqref  {eq:separable} predicts. Right: the apparent cost per tap falls with $T$ because the fixed per-call overhead amortises.}}{21}{figure.caption.40}\protected@file@percent }
+\newlabel{fig:costscaling}{{15}{21}{Measured runtime against taps per axis. Left: runtime is linear in $T$, as \eqref {eq:separable} predicts. Right: the apparent cost per tap falls with $T$ because the fixed per-call overhead amortises}{figure.caption.40}{}}
+\newlabel{eq:costfit}{{21}{22}{Additional investigation: cost scaling of the separable engine}{equation.21}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{22}{section.9}\protected@file@percent }
+\gdef \@abspage@last{22}

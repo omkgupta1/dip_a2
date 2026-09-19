@@ -1,0 +1,49 @@
+\contentsline {section}{\numberline {1}Objective and scope}{2}{section.1}%
+\contentsline {section}{\numberline {2}Dataset}{2}{section.2}%
+\contentsline {section}{\numberline {3}Method: formulation and implementation}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Grayscale conversion}{3}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Downsampling by exact block averaging}{3}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Coordinate mapping}{3}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Separable interpolation}{3}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Boundary handling and weight normalisation}{4}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Interpolation kernels}{4}{subsection.3.6}%
+\contentsline {paragraph}{Zeroth order (nearest neighbour).}{4}{section*.5}%
+\contentsline {paragraph}{First order (linear).}{4}{section*.6}%
+\contentsline {paragraph}{Second order (Dodgson quadratic, $r=1$).}{4}{section*.7}%
+\contentsline {paragraph}{Third order (Keys cubic convolution, $a = -\tfrac {1}{2}$).}{4}{section*.8}%
+\contentsline {paragraph}{Windowed sinc (Lanczos-$A$, $A \in \{3,4\}$).}{5}{section*.9}%
+\contentsline {subsection}{\numberline {3.7}PSNR}{5}{subsection.3.7}%
+\contentsline {subsection}{\numberline {3.8}SSIM}{5}{subsection.3.8}%
+\contentsline {subsection}{\numberline {3.9}Measurement protocol}{5}{subsection.3.9}%
+\contentsline {section}{\numberline {4}Implementation validation}{6}{section.4}%
+\contentsline {paragraph}{1. The worked example from the assignment prelude.}{6}{section*.10}%
+\contentsline {paragraph}{2. Constant reproduction.}{6}{section*.11}%
+\contentsline {paragraph}{3. Agreement with reference implementations.}{6}{section*.12}%
+\contentsline {section}{\numberline {5}Results}{7}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Downsampled inputs}{7}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Super-resolved outputs}{8}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Magnified crops}{11}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}PSNR}{13}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}SSIM}{14}{subsection.5.5}%
+\contentsline {subsection}{\numberline {5.6}Runtime}{15}{subsection.5.6}%
+\contentsline {section}{\numberline {6}Discussion}{15}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Quality across enlargement factors}{15}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Visual differences among the methods}{15}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Artefacts}{16}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Measured overshoot}{16}{subsection.6.4}%
+\contentsline {paragraph}{The non-negativity argument is confirmed empirically.}{16}{section*.28}%
+\contentsline {paragraph}{Overshoot grows with kernel support.}{16}{section*.29}%
+\contentsline {paragraph}{Overshoot requires both negative lobes and content near the range boundary.}{17}{section*.30}%
+\contentsline {subsection}{\numberline {6.5}Quality versus runtime}{17}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}Dependence on image content}{17}{subsection.6.6}%
+\contentsline {subsection}{\numberline {6.7}A case where nearest neighbour wins}{18}{subsection.6.7}%
+\contentsline {section}{\numberline {7}Additional investigation: region-wise error decomposition}{18}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Method}{18}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Results}{19}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Findings}{20}{subsection.7.3}%
+\contentsline {paragraph}{A complete crossover at $2\times $.}{20}{section*.35}%
+\contentsline {paragraph}{The crossover disappears with enlargement.}{20}{section*.36}%
+\contentsline {paragraph}{Error concentrates at edges, by a content-dependent amount.}{21}{figure.caption.38}%
+\contentsline {paragraph}{The method spread is an edge phenomenon.}{21}{section*.39}%
+\contentsline {section}{\numberline {8}Additional investigation: cost scaling of the separable engine}{21}{section.8}%
+\contentsline {section}{\numberline {9}Conclusion}{22}{section.9}%
